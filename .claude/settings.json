@@ -1,0 +1,19 @@
+{
+  "project": {
+    "name": "CClean-Killer",
+    "description": "The CCleaner Killer - System cleanup without the bloat"
+  },
+  "permissions": {
+    "allow": [
+      "Bash(du:*)",
+      "Bash(df:*)",
+      "Bash(find:*)",
+      "Bash(ls:*)",
+      "Bash(launchctl list:*)",
+      "Bash(ps:*)",
+      "Bash(diskutil:*)",
+      "Bash(tmutil:*)"
+    ],
+    "deny": []
+  }
+}
