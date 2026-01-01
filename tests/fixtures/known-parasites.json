@@ -1,0 +1,84 @@
+{
+  "version": "1.0.0",
+  "description": "Known parasite patterns database for testing",
+  "parasites": [
+    {
+      "pattern": "com.google.keystone",
+      "name": "Google Keystone",
+      "description": "Chrome updater (persists after Chrome removal)",
+      "severity": "medium",
+      "category": "updater"
+    },
+    {
+      "pattern": "com.google.GoogleUpdater",
+      "name": "Google Updater",
+      "description": "Google software updater",
+      "severity": "medium",
+      "category": "updater"
+    },
+    {
+      "pattern": "com.adobe.agsservice",
+      "name": "Adobe Genuine Software",
+      "description": "License check telemetry",
+      "severity": "high",
+      "category": "telemetry"
+    },
+    {
+      "pattern": "com.adobe.GC.Invoker",
+      "name": "Adobe GC Invoker",
+      "description": "Analytics collection",
+      "severity": "high",
+      "category": "telemetry"
+    },
+    {
+      "pattern": "com.adobe.ARMDC",
+      "name": "Adobe ARMDC",
+      "description": "Telemetry relay",
+      "severity": "high",
+      "category": "telemetry"
+    },
+    {
+      "pattern": "com.adobe.ARMDCHelper",
+      "name": "Adobe ARMDC Helper",
+      "description": "Telemetry helper",
+      "severity": "high",
+      "category": "telemetry"
+    },
+    {
+      "pattern": "com.piriform.ccleaner",
+      "name": "CCleaner",
+      "description": "The irony: 6 daemons for a 'cleaner'",
+      "severity": "medium",
+      "category": "bloatware"
+    },
+    {
+      "pattern": "us.zoom",
+      "name": "Zoom",
+      "description": "Background daemons",
+      "severity": "low",
+      "category": "communication"
+    },
+    {
+      "pattern": "com.spotify.webhelper",
+      "name": "Spotify Web Helper",
+      "description": "Browser integration helper",
+      "severity": "low",
+      "category": "media"
+    },
+    {
+      "pattern": "com.microsoft.update",
+      "name": "Microsoft AutoUpdate",
+      "description": "Microsoft software updater",
+      "severity": "medium",
+      "category": "updater"
+    }
+  ],
+  "safe_patterns": [
+    "com.apple.",
+    "Apple",
+    "AddressBook",
+    "iCloud",
+    "CloudDocs",
+    "Knowledge"
+  ]
+}

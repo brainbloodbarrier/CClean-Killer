@@ -1,0 +1,1420 @@
+{
+  "version": "1.0.0",
+  "lastUpdated": "2025-01-01",
+  "totalParasites": 87,
+  "categories": [
+    "update-services",
+    "telemetry",
+    "background-services",
+    "system-modifications",
+    "development-tools",
+    "communication",
+    "cloud-storage",
+    "media",
+    "security"
+  ],
+  "riskLevels": {
+    "low": "Remove if parent app uninstalled",
+    "medium": "Consider removing, may have privacy implications",
+    "high": "Remove immediately, aggressive data collection"
+  },
+  "parasites": [
+    {
+      "id": "google-keystone",
+      "name": "Google Keystone",
+      "vendor": "Google",
+      "category": "update-services",
+      "risk": "medium",
+      "pattern": "com.google.keystone.*",
+      "description": "Google's update mechanism for all Google products. Runs hourly even after all Google apps removed.",
+      "parentApps": ["Chrome", "Google Earth", "Google Drive", "Backup and Sync"],
+      "requiresAppInstalled": false,
+      "platform": "macos",
+      "files": [
+        "~/Library/LaunchAgents/com.google.keystone.agent.plist",
+        "~/Library/LaunchAgents/com.google.keystone.xpcservice.plist",
+        "~/Library/LaunchAgents/com.google.GoogleUpdater.wake.plist",
+        "~/Library/Google/GoogleSoftwareUpdate/",
+        "~/Library/Caches/com.google.SoftwareUpdate/"
+      ],
+      "removal": {
+        "requiresSudo": false,
+        "commands": [
+          "launchctl unload ~/Library/LaunchAgents/com.google.keystone.*.plist 2>/dev/null",
+          "launchctl unload ~/Library/LaunchAgents/com.google.GoogleUpdater.wake.plist 2>/dev/null",
+          "rm -f ~/Library/LaunchAgents/com.google.*.plist",
+          "rm -rf ~/Library/Google",
+          "rm -rf ~/Library/Caches/com.google.*"
+        ]
+      }
+    },
+    {
+      "id": "adobe-ags",
+      "name": "Adobe Genuine Software",
+      "vendor": "Adobe",
+      "category": "telemetry",
+      "risk": "high",
+      "pattern": "com.adobe.agsservice",
+      "description": "License validation service that phones home frequently to verify Adobe software legitimacy.",
+      "parentApps": ["Photoshop", "Illustrator", "Premiere Pro", "Creative Cloud"],
+      "requiresAppInstalled": false,
+      "platform": "macos",
+      "files": [
+        "/Library/LaunchDaemons/com.adobe.agsservice.plist",
+        "/Library/Application Support/Adobe/AdobeGCClient/"
+      ],
+      "removal": {
+        "requiresSudo": true,
+        "commands": [
+          "sudo launchctl unload /Library/LaunchDaemons/com.adobe.agsservice.plist",
+          "sudo rm -f /Library/LaunchDaemons/com.adobe.agsservice.plist"
+        ]
+      }
+    },
+    {
+      "id": "adobe-gc-invoker",
+      "name": "Adobe GC Invoker",
+      "vendor": "Adobe",
+      "category": "telemetry",
+      "risk": "high",
+      "pattern": "com.adobe.GC.Invoker.*",
+      "description": "Analytics collection service that sends usage data to Adobe servers.",
+      "parentApps": ["Any Adobe Product"],
+      "requiresAppInstalled": false,
+      "platform": "macos",
+      "files": [
+        "/Library/LaunchAgents/com.adobe.GC.Invoker-1.0.plist",
+        "~/Library/LaunchAgents/com.adobe.GC.Invoker-1.0.plist"
+      ],
+      "removal": {
+        "requiresSudo": false,
+        "commands": [
+          "launchctl unload ~/Library/LaunchAgents/com.adobe.GC.Invoker-1.0.plist 2>/dev/null",
+          "rm -f ~/Library/LaunchAgents/com.adobe.GC.Invoker*.plist"
+        ]
+      }
+    },
+    {
+      "id": "adobe-armdc",
+      "name": "Adobe ARMDC",
+      "vendor": "Adobe",
+      "category": "update-services",
+      "risk": "medium",
+      "pattern": "com.adobe.ARMDC.*",
+      "description": "Adobe Remote Management and Diagnostics Client. Handles updates and telemetry relay.",
+      "parentApps": ["Adobe Creative Cloud", "Adobe Reader"],
+      "requiresAppInstalled": false,
+      "platform": "macos",
+      "files": [
+        "/Library/LaunchDaemons/com.adobe.ARMDC.Communicator.plist",
+        "/Library/LaunchDaemons/com.adobe.ARMDC.SMJobBlessHelper.plist",
+        "/Library/LaunchAgents/com.adobe.ARMDCHelper.*.plist"
+      ],
+      "removal": {
+        "requiresSudo": true,
+        "commands": [
+          "sudo launchctl unload /Library/LaunchDaemons/com.adobe.ARMDC.*.plist",
+          "sudo rm -f /Library/LaunchDaemons/com.adobe.ARMDC.*.plist",
+          "sudo rm -f /Library/LaunchAgents/com.adobe.ARMDCHelper.*.plist"
+        ]
+      }
+    },
+    {
+      "id": "ccleaner",
+      "name": "CCleaner Services",
+      "vendor": "Piriform/Avast",
+      "category": "telemetry",
+      "risk": "high",
+      "pattern": "com.piriform.ccleaner.*",
+      "description": "Ironic - a 'cleaner' app with 6+ persistent background processes for scanning, updates, and telemetry.",
+      "parentApps": ["CCleaner"],
+      "requiresAppInstalled": false,
+      "platform": "macos",
+      "files": [
+        "/Library/LaunchDaemons/com.piriform.ccleaner.engine.xpc.plist",
+        "/Library/LaunchDaemons/com.piriform.ccleaner.services.submit.plist",
+        "/Library/LaunchDaemons/com.piriform.ccleaner.services.xpc.plist",
+        "/Library/LaunchDaemons/com.piriform.ccleaner.uninstall.plist",
+        "/Library/LaunchDaemons/com.piriform.ccleaner.update.xpc.plist",
+        "/Library/LaunchAgents/com.piriform.ccleaner.plist",
+        "/Library/LaunchAgents/com.piriform.ccleaner.update.plist",
+        "~/Library/Application Support/CCleaner",
+        "~/Library/Caches/com.piriform.ccleaner"
+      ],
+      "removal": {
+        "requiresSudo": true,
+        "commands": [
+          "sudo launchctl unload /Library/LaunchDaemons/com.piriform.ccleaner.*.plist",
+          "launchctl unload /Library/LaunchAgents/com.piriform.ccleaner.*.plist",
+          "sudo rm -rf /Applications/CCleaner.app",
+          "sudo rm -f /Library/LaunchDaemons/com.piriform.ccleaner.*.plist",
+          "rm -f /Library/LaunchAgents/com.piriform.ccleaner.*.plist",
+          "rm -rf ~/Library/Application\\ Support/CCleaner",
+          "rm -rf ~/Library/Caches/com.piriform.ccleaner"
+        ]
+      }
+    },
+    {
+      "id": "zoom-daemon",
+      "name": "Zoom Daemon",
+      "vendor": "Zoom Video Communications",
+      "category": "background-services",
+      "risk": "medium",
+      "pattern": "us.zoom.*",
+      "description": "Video conferencing daemon that runs even when Zoom is not in use. Monitors audio devices.",
+      "parentApps": ["Zoom"],
+      "requiresAppInstalled": false,
+      "platform": "macos",
+      "files": [
+        "/Library/LaunchDaemons/us.zoom.ZoomDaemon.plist",
+        "/Library/LaunchAgents/us.zoom.updater.plist",
+        "/Library/LaunchAgents/us.zoom.updater.login.check.plist",
+        "~/Library/Application Support/zoom.us/"
+      ],
+      "removal": {
+        "requiresSudo": true,
+        "commands": [
+          "sudo launchctl unload /Library/LaunchDaemons/us.zoom.ZoomDaemon.plist",
+          "launchctl unload /Library/LaunchAgents/us.zoom.updater*.plist",
+          "sudo rm -f /Library/LaunchDaemons/us.zoom.*.plist",
+          "rm -f /Library/LaunchAgents/us.zoom.*.plist",
+          "rm -rf ~/Library/Application\\ Support/zoom.us"
+        ]
+      }
+    },
+    {
+      "id": "microsoft-autoupdate",
+      "name": "Microsoft AutoUpdate",
+      "vendor": "Microsoft",
+      "category": "update-services",
+      "risk": "low",
+      "pattern": "com.microsoft.update.*",
+      "description": "Microsoft's update service for Office, Edge, and other Microsoft products.",
+      "parentApps": ["Microsoft Office", "Microsoft Edge", "OneDrive"],
+      "requiresAppInstalled": false,
+      "platform": "macos",
+      "files": [
+        "/Library/LaunchAgents/com.microsoft.update.agent.plist",
+        "/Library/LaunchDaemons/com.microsoft.autoupdate.helper.plist",
+        "~/Library/LaunchAgents/com.microsoft.update.agent.plist"
+      ],
+      "removal": {
+        "requiresSudo": true,
+        "commands": [
+          "sudo launchctl unload /Library/LaunchDaemons/com.microsoft.autoupdate.*.plist",
+          "launchctl unload /Library/LaunchAgents/com.microsoft.update.*.plist",
+          "launchctl unload ~/Library/LaunchAgents/com.microsoft.update.*.plist"
+        ]
+      }
+    },
+    {
+      "id": "spotify-helper",
+      "name": "Spotify Web Helper",
+      "vendor": "Spotify",
+      "category": "background-services",
+      "risk": "low",
+      "pattern": "com.spotify.*",
+      "description": "Background helper for Spotify web player integration and media key handling.",
+      "parentApps": ["Spotify"],
+      "requiresAppInstalled": true,
+      "platform": "macos",
+      "files": [
+        "~/Library/LaunchAgents/com.spotify.webhelper.plist",
+        "~/Library/Application Support/Spotify/",
+        "~/Library/Caches/com.spotify.client/"
+      ],
+      "removal": {
+        "requiresSudo": false,
+        "commands": [
+          "launchctl unload ~/Library/LaunchAgents/com.spotify.*.plist",
+          "rm -f ~/Library/LaunchAgents/com.spotify.*.plist"
+        ]
+      }
+    },
+    {
+      "id": "jetbrains-toolbox",
+      "name": "JetBrains Toolbox",
+      "vendor": "JetBrains",
+      "category": "update-services",
+      "risk": "medium",
+      "pattern": "com.jetbrains.toolbox.*",
+      "description": "IDE manager that runs continuously to manage and update JetBrains products. Includes telemetry.",
+      "parentApps": ["JetBrains Toolbox", "IntelliJ IDEA", "PyCharm", "WebStorm", "PhpStorm"],
+      "requiresAppInstalled": false,
+      "platform": "macos",
+      "files": [
+        "~/Library/LaunchAgents/com.jetbrains.toolbox.plist",
+        "~/Library/LaunchAgents/com.jetbrains.toolbox.helper.plist",
+        "~/Library/Application Support/JetBrains/Toolbox/",
+        "~/Library/Caches/JetBrains/",
+        "~/Library/Logs/JetBrains/"
+      ],
+      "removal": {
+        "requiresSudo": false,
+        "commands": [
+          "launchctl unload ~/Library/LaunchAgents/com.jetbrains.toolbox*.plist",
+          "rm -f ~/Library/LaunchAgents/com.jetbrains.*.plist",
+          "rm -rf ~/Library/Application\\ Support/JetBrains",
+          "rm -rf ~/Library/Caches/JetBrains",
+          "rm -rf ~/Library/Logs/JetBrains"
+        ]
+      }
+    },
+    {
+      "id": "docker-desktop",
+      "name": "Docker Desktop",
+      "vendor": "Docker Inc",
+      "category": "development-tools",
+      "risk": "low",
+      "pattern": "com.docker.*",
+      "description": "Container platform with network daemon and helper services. Can use significant resources.",
+      "parentApps": ["Docker Desktop"],
+      "requiresAppInstalled": true,
+      "platform": "macos",
+      "files": [
+        "/Library/LaunchDaemons/com.docker.vmnetd.plist",
+        "/Library/PrivilegedHelperTools/com.docker.vmnetd",
+        "~/Library/LaunchAgents/com.docker.helper.plist",
+        "~/Library/Containers/com.docker.docker/",
+        "~/Library/Group Containers/group.com.docker/",
+        "~/.docker/",
+        "~/Library/Application Support/Docker Desktop/"
+      ],
+      "removal": {
+        "requiresSudo": true,
+        "commands": [
+          "sudo launchctl unload /Library/LaunchDaemons/com.docker.vmnetd.plist",
+          "launchctl unload ~/Library/LaunchAgents/com.docker.*.plist",
+          "sudo rm -f /Library/LaunchDaemons/com.docker.*.plist",
+          "sudo rm -f /Library/PrivilegedHelperTools/com.docker.*",
+          "rm -f ~/Library/LaunchAgents/com.docker.*.plist",
+          "rm -rf ~/Library/Containers/com.docker.docker",
+          "rm -rf ~/Library/Group\\ Containers/group.com.docker",
+          "rm -rf ~/.docker"
+        ]
+      }
+    },
+    {
+      "id": "dropbox",
+      "name": "Dropbox",
+      "vendor": "Dropbox Inc",
+      "category": "cloud-storage",
+      "risk": "medium",
+      "pattern": "com.dropbox.*",
+      "description": "Cloud storage with aggressive sync daemon and Finder integration. Continuous file monitoring.",
+      "parentApps": ["Dropbox"],
+      "requiresAppInstalled": false,
+      "platform": "macos",
+      "files": [
+        "/Library/LaunchDaemons/com.dropbox.DropboxMacUpdate.daemon.plist",
+        "~/Library/LaunchAgents/com.dropbox.DropboxMacUpdate.agent.plist",
+        "~/Library/LaunchAgents/com.dropbox.client.plist",
+        "~/Library/Application Support/Dropbox/",
+        "~/Library/Dropbox/",
+        "~/.dropbox/"
+      ],
+      "removal": {
+        "requiresSudo": true,
+        "commands": [
+          "sudo launchctl unload /Library/LaunchDaemons/com.dropbox.*.plist",
+          "launchctl unload ~/Library/LaunchAgents/com.dropbox.*.plist",
+          "sudo rm -f /Library/LaunchDaemons/com.dropbox.*.plist",
+          "rm -f ~/Library/LaunchAgents/com.dropbox.*.plist",
+          "rm -rf ~/Library/Application\\ Support/Dropbox",
+          "rm -rf ~/Library/Dropbox",
+          "rm -rf ~/.dropbox"
+        ]
+      }
+    },
+    {
+      "id": "onedrive",
+      "name": "Microsoft OneDrive",
+      "vendor": "Microsoft",
+      "category": "cloud-storage",
+      "risk": "medium",
+      "pattern": "com.microsoft.OneDrive.*",
+      "description": "Cloud storage sync service with Finder integration and background update daemon.",
+      "parentApps": ["OneDrive", "Microsoft 365"],
+      "requiresAppInstalled": false,
+      "platform": "macos",
+      "files": [
+        "~/Library/LaunchAgents/com.microsoft.OneDrive.plist",
+        "~/Library/LaunchAgents/com.microsoft.OneDriveUpdaterDaemon.plist",
+        "~/Library/Application Support/OneDrive/",
+        "~/Library/Caches/com.microsoft.OneDrive/",
+        "~/Library/Group Containers/*.com.microsoft.OneDrive/"
+      ],
+      "removal": {
+        "requiresSudo": false,
+        "commands": [
+          "launchctl unload ~/Library/LaunchAgents/com.microsoft.OneDrive*.plist",
+          "rm -f ~/Library/LaunchAgents/com.microsoft.OneDrive*.plist",
+          "rm -rf ~/Library/Application\\ Support/OneDrive",
+          "rm -rf ~/Library/Caches/com.microsoft.OneDrive",
+          "rm -rf ~/Library/Group\\ Containers/*.com.microsoft.OneDrive"
+        ]
+      }
+    },
+    {
+      "id": "google-drive",
+      "name": "Google Drive",
+      "vendor": "Google",
+      "category": "cloud-storage",
+      "risk": "medium",
+      "pattern": "com.google.drivefs.*",
+      "description": "Google Drive File Stream with background sync and Finder integration.",
+      "parentApps": ["Google Drive"],
+      "requiresAppInstalled": false,
+      "platform": "macos",
+      "files": [
+        "~/Library/LaunchAgents/com.google.drivefs.plist",
+        "~/Library/LaunchAgents/com.google.drivefs.helper.plist",
+        "~/Library/Application Support/Google/DriveFS/",
+        "~/Library/Caches/com.google.drivefs/"
+      ],
+      "removal": {
+        "requiresSudo": false,
+        "commands": [
+          "launchctl unload ~/Library/LaunchAgents/com.google.drivefs*.plist",
+          "rm -f ~/Library/LaunchAgents/com.google.drivefs*.plist",
+          "rm -rf ~/Library/Application\\ Support/Google/DriveFS",
+          "rm -rf ~/Library/Caches/com.google.drivefs"
+        ]
+      }
+    },
+    {
+      "id": "box-drive",
+      "name": "Box Drive",
+      "vendor": "Box Inc",
+      "category": "cloud-storage",
+      "risk": "medium",
+      "pattern": "com.box.desktop.*",
+      "description": "Enterprise cloud storage with background sync daemon.",
+      "parentApps": ["Box Drive"],
+      "requiresAppInstalled": false,
+      "platform": "macos",
+      "files": [
+        "~/Library/LaunchAgents/com.box.desktop.helper.plist",
+        "~/Library/LaunchAgents/com.box.desktop.plist",
+        "~/Library/Application Support/Box/",
+        "~/Library/Caches/com.box.desktop/"
+      ],
+      "removal": {
+        "requiresSudo": false,
+        "commands": [
+          "launchctl unload ~/Library/LaunchAgents/com.box.desktop*.plist",
+          "rm -f ~/Library/LaunchAgents/com.box.desktop*.plist",
+          "rm -rf ~/Library/Application\\ Support/Box",
+          "rm -rf ~/Library/Caches/com.box.desktop"
+        ]
+      }
+    },
+    {
+      "id": "slack",
+      "name": "Slack",
+      "vendor": "Slack Technologies",
+      "category": "communication",
+      "risk": "low",
+      "pattern": "com.tinyspeck.slackmacgap.*",
+      "description": "Team communication with background notification helper and presence detection.",
+      "parentApps": ["Slack"],
+      "requiresAppInstalled": true,
+      "platform": "macos",
+      "files": [
+        "~/Library/LaunchAgents/com.tinyspeck.slackmacgap.plist",
+        "~/Library/LaunchAgents/com.tinyspeck.slackmacgap.helper.plist",
+        "~/Library/Application Support/Slack/",
+        "~/Library/Caches/com.tinyspeck.slackmacgap/"
+      ],
+      "removal": {
+        "requiresSudo": false,
+        "commands": [
+          "launchctl unload ~/Library/LaunchAgents/com.tinyspeck.slackmacgap*.plist",
+          "rm -f ~/Library/LaunchAgents/com.tinyspeck.*.plist",
+          "rm -rf ~/Library/Application\\ Support/Slack",
+          "rm -rf ~/Library/Caches/com.tinyspeck.slackmacgap"
+        ]
+      }
+    },
+    {
+      "id": "discord",
+      "name": "Discord",
+      "vendor": "Discord Inc",
+      "category": "communication",
+      "risk": "low",
+      "pattern": "com.hnc.Discord.*",
+      "description": "Gaming communication with auto-update service and rich presence integration.",
+      "parentApps": ["Discord"],
+      "requiresAppInstalled": false,
+      "platform": "macos",
+      "files": [
+        "~/Library/LaunchAgents/com.hnc.Discord.ShipIt.plist",
+        "~/Library/Application Support/discord/",
+        "~/Library/Application Support/Discord/",
+        "~/Library/Caches/com.hnc.Discord/"
+      ],
+      "removal": {
+        "requiresSudo": false,
+        "commands": [
+          "launchctl unload ~/Library/LaunchAgents/com.hnc.Discord.*.plist",
+          "rm -f ~/Library/LaunchAgents/com.hnc.Discord.*.plist",
+          "rm -rf ~/Library/Application\\ Support/discord",
+          "rm -rf ~/Library/Application\\ Support/Discord",
+          "rm -rf ~/Library/Caches/com.hnc.Discord"
+        ]
+      }
+    },
+    {
+      "id": "microsoft-teams",
+      "name": "Microsoft Teams",
+      "vendor": "Microsoft",
+      "category": "communication",
+      "risk": "medium",
+      "pattern": "com.microsoft.teams.*",
+      "description": "Enterprise communication with extensive background services and persistent WebRTC connections.",
+      "parentApps": ["Microsoft Teams"],
+      "requiresAppInstalled": false,
+      "platform": "macos",
+      "files": [
+        "~/Library/LaunchAgents/com.microsoft.teams.helper.plist",
+        "~/Library/LaunchAgents/com.microsoft.teams.TeamsUpdaterDaemon.plist",
+        "~/Library/Application Support/Microsoft/Teams/",
+        "~/Library/Caches/com.microsoft.teams/",
+        "~/Library/Group Containers/*.com.microsoft.teams/"
+      ],
+      "removal": {
+        "requiresSudo": false,
+        "commands": [
+          "launchctl unload ~/Library/LaunchAgents/com.microsoft.teams*.plist",
+          "rm -f ~/Library/LaunchAgents/com.microsoft.teams*.plist",
+          "rm -rf ~/Library/Application\\ Support/Microsoft/Teams",
+          "rm -rf ~/Library/Caches/com.microsoft.teams",
+          "rm -rf ~/Library/Group\\ Containers/*.com.microsoft.teams"
+        ]
+      }
+    },
+    {
+      "id": "telegram",
+      "name": "Telegram",
+      "vendor": "Telegram LLC",
+      "category": "communication",
+      "risk": "low",
+      "pattern": "ru.keepcoder.Telegram.*",
+      "description": "Messaging app with background notification helper.",
+      "parentApps": ["Telegram", "Telegram Desktop"],
+      "requiresAppInstalled": true,
+      "platform": "macos",
+      "files": [
+        "~/Library/LaunchAgents/ru.keepcoder.Telegram.helper.plist",
+        "~/Library/Application Support/Telegram Desktop/",
+        "~/Library/Caches/ru.keepcoder.Telegram/"
+      ],
+      "removal": {
+        "requiresSudo": false,
+        "commands": [
+          "launchctl unload ~/Library/LaunchAgents/ru.keepcoder.Telegram*.plist",
+          "rm -f ~/Library/LaunchAgents/ru.keepcoder.Telegram*.plist"
+        ]
+      }
+    },
+    {
+      "id": "whatsapp",
+      "name": "WhatsApp Desktop",
+      "vendor": "Meta",
+      "category": "communication",
+      "risk": "low",
+      "pattern": "net.whatsapp.WhatsApp.*",
+      "description": "WhatsApp desktop with background notification helper.",
+      "parentApps": ["WhatsApp"],
+      "requiresAppInstalled": true,
+      "platform": "macos",
+      "files": [
+        "~/Library/LaunchAgents/net.whatsapp.WhatsApp.helper.plist",
+        "~/Library/Application Support/WhatsApp/",
+        "~/Library/Caches/net.whatsapp.WhatsApp/"
+      ],
+      "removal": {
+        "requiresSudo": false,
+        "commands": [
+          "launchctl unload ~/Library/LaunchAgents/net.whatsapp.WhatsApp*.plist",
+          "rm -f ~/Library/LaunchAgents/net.whatsapp.WhatsApp*.plist"
+        ]
+      }
+    },
+    {
+      "id": "signal",
+      "name": "Signal Desktop",
+      "vendor": "Signal Foundation",
+      "category": "communication",
+      "risk": "low",
+      "pattern": "org.whispersystems.signal-desktop.*",
+      "description": "Secure messaging with background notification helper.",
+      "parentApps": ["Signal"],
+      "requiresAppInstalled": true,
+      "platform": "macos",
+      "files": [
+        "~/Library/LaunchAgents/org.whispersystems.signal-desktop.helper.plist",
+        "~/Library/Application Support/Signal/",
+        "~/Library/Caches/org.whispersystems.signal-desktop/"
+      ],
+      "removal": {
+        "requiresSudo": false,
+        "commands": [
+          "launchctl unload ~/Library/LaunchAgents/org.whispersystems.signal-desktop*.plist",
+          "rm -f ~/Library/LaunchAgents/org.whispersystems.signal-desktop*.plist"
+        ]
+      }
+    },
+    {
+      "id": "webex",
+      "name": "Cisco Webex",
+      "vendor": "Cisco",
+      "category": "communication",
+      "risk": "medium",
+      "pattern": "com.cisco.webexmeetingsapp.*",
+      "description": "Enterprise video conferencing with background daemon and audio monitoring.",
+      "parentApps": ["Webex Meetings", "Webex"],
+      "requiresAppInstalled": false,
+      "platform": "macos",
+      "files": [
+        "~/Library/LaunchAgents/com.cisco.webexmeetingsapp.plist",
+        "/Library/LaunchDaemons/com.cisco.webexmeetingsapp.daemon.plist",
+        "~/Library/Application Support/Cisco/Webex Meetings/",
+        "~/Library/Caches/com.cisco.webexmeetingsapp/"
+      ],
+      "removal": {
+        "requiresSudo": true,
+        "commands": [
+          "sudo launchctl unload /Library/LaunchDaemons/com.cisco.webexmeetingsapp*.plist",
+          "launchctl unload ~/Library/LaunchAgents/com.cisco.webexmeetingsapp*.plist",
+          "rm -f ~/Library/LaunchAgents/com.cisco.webexmeetingsapp*.plist"
+        ]
+      }
+    },
+    {
+      "id": "skype",
+      "name": "Skype",
+      "vendor": "Microsoft",
+      "category": "communication",
+      "risk": "medium",
+      "pattern": "com.skype.skype.*",
+      "description": "Video calling with background notification helper.",
+      "parentApps": ["Skype"],
+      "requiresAppInstalled": false,
+      "platform": "macos",
+      "files": [
+        "~/Library/LaunchAgents/com.skype.skype.helper.plist",
+        "~/Library/Application Support/Skype/",
+        "~/Library/Caches/com.skype.skype/"
+      ],
+      "removal": {
+        "requiresSudo": false,
+        "commands": [
+          "launchctl unload ~/Library/LaunchAgents/com.skype.skype*.plist",
+          "rm -f ~/Library/LaunchAgents/com.skype.skype*.plist"
+        ]
+      }
+    },
+    {
+      "id": "brave-update",
+      "name": "Brave Browser Update",
+      "vendor": "Brave Software",
+      "category": "update-services",
+      "risk": "low",
+      "pattern": "com.brave.update.*",
+      "description": "Auto-update service for Brave browser.",
+      "parentApps": ["Brave Browser"],
+      "requiresAppInstalled": false,
+      "platform": "macos",
+      "files": [
+        "~/Library/LaunchAgents/com.brave.update.agent.plist",
+        "~/Library/Caches/com.brave.Browser/"
+      ],
+      "removal": {
+        "requiresSudo": false,
+        "commands": [
+          "launchctl unload ~/Library/LaunchAgents/com.brave.update*.plist",
+          "rm -f ~/Library/LaunchAgents/com.brave.*.plist"
+        ]
+      }
+    },
+    {
+      "id": "firefox-update",
+      "name": "Firefox Update",
+      "vendor": "Mozilla",
+      "category": "update-services",
+      "risk": "low",
+      "pattern": "org.mozilla.*",
+      "description": "Firefox background update service.",
+      "parentApps": ["Firefox"],
+      "requiresAppInstalled": false,
+      "platform": "macos",
+      "files": [
+        "~/Library/LaunchAgents/org.mozilla.updater.plist",
+        "~/Library/Caches/org.mozilla.firefox/"
+      ],
+      "removal": {
+        "requiresSudo": false,
+        "commands": [
+          "launchctl unload ~/Library/LaunchAgents/org.mozilla.updater*.plist",
+          "rm -f ~/Library/LaunchAgents/org.mozilla.*.plist"
+        ]
+      }
+    },
+    {
+      "id": "1password",
+      "name": "1Password",
+      "vendor": "AgileBits",
+      "category": "security",
+      "risk": "low",
+      "pattern": "com.1password.*",
+      "description": "Password manager with keychain integration and browser helper.",
+      "parentApps": ["1Password"],
+      "requiresAppInstalled": true,
+      "platform": "macos",
+      "files": [
+        "~/Library/LaunchAgents/com.1password.1password-agent.plist",
+        "~/Library/LaunchAgents/com.1password.browser-helper.plist",
+        "~/Library/Group Containers/group.1password/",
+        "~/Library/Application Support/1Password/"
+      ],
+      "removal": {
+        "requiresSudo": false,
+        "commands": [
+          "launchctl unload ~/Library/LaunchAgents/com.1password.*.plist",
+          "rm -f ~/Library/LaunchAgents/com.1password.*.plist"
+        ],
+        "warning": "Ensure passwords are exported before removal!"
+      }
+    },
+    {
+      "id": "bitwarden",
+      "name": "Bitwarden",
+      "vendor": "Bitwarden Inc",
+      "category": "security",
+      "risk": "low",
+      "pattern": "com.bitwarden.desktop.*",
+      "description": "Open source password manager with background helper.",
+      "parentApps": ["Bitwarden"],
+      "requiresAppInstalled": true,
+      "platform": "macos",
+      "files": [
+        "~/Library/LaunchAgents/com.bitwarden.desktop.helper.plist",
+        "~/Library/Application Support/Bitwarden/",
+        "~/Library/Caches/com.bitwarden.desktop/"
+      ],
+      "removal": {
+        "requiresSudo": false,
+        "commands": [
+          "launchctl unload ~/Library/LaunchAgents/com.bitwarden.desktop*.plist",
+          "rm -f ~/Library/LaunchAgents/com.bitwarden.desktop*.plist"
+        ],
+        "warning": "Ensure passwords are exported before removal!"
+      }
+    },
+    {
+      "id": "lastpass",
+      "name": "LastPass",
+      "vendor": "LogMeIn",
+      "category": "security",
+      "risk": "medium",
+      "pattern": "com.lastpass.*",
+      "description": "Password manager with background sync and browser helper.",
+      "parentApps": ["LastPass"],
+      "requiresAppInstalled": false,
+      "platform": "macos",
+      "files": [
+        "~/Library/LaunchAgents/com.lastpass.LastPassHelper.plist",
+        "~/Library/Application Support/LastPass/",
+        "~/Library/Caches/com.lastpass.LastPass/"
+      ],
+      "removal": {
+        "requiresSudo": false,
+        "commands": [
+          "launchctl unload ~/Library/LaunchAgents/com.lastpass.*.plist",
+          "rm -f ~/Library/LaunchAgents/com.lastpass.*.plist"
+        ],
+        "warning": "Ensure passwords are exported before removal!"
+      }
+    },
+    {
+      "id": "nordvpn",
+      "name": "NordVPN",
+      "vendor": "Nord Security",
+      "category": "security",
+      "risk": "medium",
+      "pattern": "com.nordvpn.*",
+      "description": "VPN with privileged helper daemon for network configuration.",
+      "parentApps": ["NordVPN"],
+      "requiresAppInstalled": false,
+      "platform": "macos",
+      "files": [
+        "/Library/LaunchDaemons/com.nordvpn.macos.helper.plist",
+        "/Library/LaunchDaemons/com.nordvpn.NordVPN.IKE.plist",
+        "/Library/PrivilegedHelperTools/com.nordvpn.macos.helper",
+        "~/Library/Application Support/NordVPN/"
+      ],
+      "removal": {
+        "requiresSudo": true,
+        "commands": [
+          "sudo launchctl unload /Library/LaunchDaemons/com.nordvpn.*.plist",
+          "sudo rm -f /Library/LaunchDaemons/com.nordvpn.*.plist",
+          "sudo rm -f /Library/PrivilegedHelperTools/com.nordvpn.*"
+        ]
+      }
+    },
+    {
+      "id": "expressvpn",
+      "name": "ExpressVPN",
+      "vendor": "ExpressVPN",
+      "category": "security",
+      "risk": "medium",
+      "pattern": "com.expressvpn.*",
+      "description": "VPN with privileged helper daemon and agent.",
+      "parentApps": ["ExpressVPN"],
+      "requiresAppInstalled": false,
+      "platform": "macos",
+      "files": [
+        "/Library/LaunchDaemons/com.expressvpn.helper.plist",
+        "/Library/LaunchAgents/com.expressvpn.ExpressVPN.agent.plist",
+        "/Library/PrivilegedHelperTools/com.expressvpn.helper",
+        "~/Library/Application Support/ExpressVPN/"
+      ],
+      "removal": {
+        "requiresSudo": true,
+        "commands": [
+          "sudo launchctl unload /Library/LaunchDaemons/com.expressvpn.*.plist",
+          "launchctl unload /Library/LaunchAgents/com.expressvpn.*.plist",
+          "sudo rm -f /Library/LaunchDaemons/com.expressvpn.*.plist",
+          "sudo rm -f /Library/PrivilegedHelperTools/com.expressvpn.*"
+        ]
+      }
+    },
+    {
+      "id": "surfshark",
+      "name": "Surfshark VPN",
+      "vendor": "Surfshark",
+      "category": "security",
+      "risk": "medium",
+      "pattern": "com.surfshark.*",
+      "description": "VPN with privileged helper daemon.",
+      "parentApps": ["Surfshark"],
+      "requiresAppInstalled": false,
+      "platform": "macos",
+      "files": [
+        "/Library/LaunchDaemons/com.surfshark.vpnclient.helper.plist",
+        "/Library/PrivilegedHelperTools/com.surfshark.vpnclient.helper",
+        "~/Library/Application Support/Surfshark/"
+      ],
+      "removal": {
+        "requiresSudo": true,
+        "commands": [
+          "sudo launchctl unload /Library/LaunchDaemons/com.surfshark.*.plist",
+          "sudo rm -f /Library/LaunchDaemons/com.surfshark.*.plist",
+          "sudo rm -f /Library/PrivilegedHelperTools/com.surfshark.*"
+        ]
+      }
+    },
+    {
+      "id": "tunnelblick",
+      "name": "Tunnelblick",
+      "vendor": "Tunnelblick Project",
+      "category": "security",
+      "risk": "low",
+      "pattern": "net.tunnelblick.*",
+      "description": "OpenVPN client with background tunnel daemon.",
+      "parentApps": ["Tunnelblick"],
+      "requiresAppInstalled": true,
+      "platform": "macos",
+      "files": [
+        "/Library/LaunchDaemons/net.tunnelblick.tunnelblick.tunnelblickd.plist",
+        "/Library/Application Support/Tunnelblick/",
+        "~/Library/Application Support/Tunnelblick/"
+      ],
+      "removal": {
+        "requiresSudo": true,
+        "commands": [
+          "sudo launchctl unload /Library/LaunchDaemons/net.tunnelblick.*.plist",
+          "sudo rm -f /Library/LaunchDaemons/net.tunnelblick.*.plist"
+        ]
+      }
+    },
+    {
+      "id": "tailscale",
+      "name": "Tailscale",
+      "vendor": "Tailscale Inc",
+      "category": "security",
+      "risk": "low",
+      "pattern": "com.tailscale.*",
+      "description": "Zero-config VPN with system extension.",
+      "parentApps": ["Tailscale"],
+      "requiresAppInstalled": true,
+      "platform": "macos",
+      "files": [
+        "~/Library/LaunchAgents/com.tailscale.ipnextension.plist",
+        "~/Library/Application Support/Tailscale/",
+        "/Library/SystemExtensions/com.tailscale.ipnextension/"
+      ],
+      "removal": {
+        "requiresSudo": false,
+        "commands": [
+          "launchctl unload ~/Library/LaunchAgents/com.tailscale.*.plist",
+          "rm -f ~/Library/LaunchAgents/com.tailscale.*.plist"
+        ],
+        "note": "System extension may need manual removal"
+      }
+    },
+    {
+      "id": "little-snitch",
+      "name": "Little Snitch",
+      "vendor": "Objective Development",
+      "category": "security",
+      "risk": "low",
+      "pattern": "at.obdev.LittleSnitch*",
+      "description": "Network monitor with kernel extension and helper.",
+      "parentApps": ["Little Snitch"],
+      "requiresAppInstalled": true,
+      "platform": "macos",
+      "files": [
+        "/Library/LaunchDaemons/at.obdev.LittleSnitchDaemon.plist",
+        "/Library/LaunchAgents/at.obdev.LittleSnitchUIAgent.plist",
+        "/Library/Application Support/Objective Development/Little Snitch/"
+      ],
+      "removal": {
+        "requiresSudo": true,
+        "commands": [
+          "sudo launchctl unload /Library/LaunchDaemons/at.obdev.LittleSnitch*.plist",
+          "launchctl unload /Library/LaunchAgents/at.obdev.LittleSnitch*.plist"
+        ],
+        "note": "Use built-in uninstaller for complete removal"
+      }
+    },
+    {
+      "id": "malwarebytes",
+      "name": "Malwarebytes",
+      "vendor": "Malwarebytes",
+      "category": "security",
+      "risk": "low",
+      "pattern": "com.malwarebytes.*",
+      "description": "Anti-malware with background scan daemon.",
+      "parentApps": ["Malwarebytes"],
+      "requiresAppInstalled": false,
+      "platform": "macos",
+      "files": [
+        "/Library/LaunchDaemons/com.malwarebytes.mbam.rtprotection.daemon.plist",
+        "/Library/LaunchAgents/com.malwarebytes.mbam.frontend.agent.plist",
+        "/Library/Application Support/Malwarebytes/"
+      ],
+      "removal": {
+        "requiresSudo": true,
+        "commands": [
+          "sudo launchctl unload /Library/LaunchDaemons/com.malwarebytes.*.plist",
+          "launchctl unload /Library/LaunchAgents/com.malwarebytes.*.plist"
+        ],
+        "note": "Use built-in uninstaller for complete removal"
+      }
+    },
+    {
+      "id": "avast",
+      "name": "Avast Security",
+      "vendor": "Avast Software",
+      "category": "security",
+      "risk": "medium",
+      "pattern": "com.avast.*",
+      "description": "Antivirus with multiple background daemons.",
+      "parentApps": ["Avast Security"],
+      "requiresAppInstalled": false,
+      "platform": "macos",
+      "files": [
+        "/Library/LaunchDaemons/com.avast.daemon.plist",
+        "/Library/LaunchDaemons/com.avast.proxy.plist",
+        "/Library/LaunchAgents/com.avast.useragent.plist",
+        "/Library/Application Support/Avast/"
+      ],
+      "removal": {
+        "requiresSudo": true,
+        "commands": [
+          "sudo launchctl unload /Library/LaunchDaemons/com.avast.*.plist",
+          "launchctl unload /Library/LaunchAgents/com.avast.*.plist"
+        ],
+        "note": "Use built-in uninstaller for complete removal"
+      }
+    },
+    {
+      "id": "vlc",
+      "name": "VLC Media Player",
+      "vendor": "VideoLAN",
+      "category": "media",
+      "risk": "low",
+      "pattern": "org.videolan.vlc.*",
+      "description": "Media player with optional update checker.",
+      "parentApps": ["VLC"],
+      "requiresAppInstalled": true,
+      "platform": "macos",
+      "files": [
+        "~/Library/LaunchAgents/org.videolan.vlc-updater.plist",
+        "~/Library/Application Support/org.videolan.vlc/",
+        "~/Library/Caches/org.videolan.vlc/"
+      ],
+      "removal": {
+        "requiresSudo": false,
+        "commands": [
+          "launchctl unload ~/Library/LaunchAgents/org.videolan.vlc*.plist",
+          "rm -f ~/Library/LaunchAgents/org.videolan.vlc*.plist"
+        ]
+      }
+    },
+    {
+      "id": "plex-media-server",
+      "name": "Plex Media Server",
+      "vendor": "Plex Inc",
+      "category": "media",
+      "risk": "low",
+      "pattern": "com.plexapp.*",
+      "description": "Media server with background streaming daemon.",
+      "parentApps": ["Plex Media Server"],
+      "requiresAppInstalled": true,
+      "platform": "macos",
+      "files": [
+        "~/Library/LaunchAgents/com.plexapp.plexmediaserver.plist",
+        "~/Library/Application Support/Plex Media Server/",
+        "~/Library/Caches/PlexMediaServer/"
+      ],
+      "removal": {
+        "requiresSudo": false,
+        "commands": [
+          "launchctl unload ~/Library/LaunchAgents/com.plexapp.*.plist",
+          "rm -f ~/Library/LaunchAgents/com.plexapp.*.plist"
+        ]
+      }
+    },
+    {
+      "id": "obs-studio",
+      "name": "OBS Studio",
+      "vendor": "OBS Project",
+      "category": "media",
+      "risk": "low",
+      "pattern": "com.obsproject.obs-studio.*",
+      "description": "Streaming software with virtual camera helper.",
+      "parentApps": ["OBS"],
+      "requiresAppInstalled": true,
+      "platform": "macos",
+      "files": [
+        "~/Library/LaunchAgents/com.obsproject.obs-studio.virtualcam.plist",
+        "~/Library/Application Support/obs-studio/",
+        "~/Library/Caches/com.obsproject.obs-studio/"
+      ],
+      "removal": {
+        "requiresSudo": false,
+        "commands": [
+          "launchctl unload ~/Library/LaunchAgents/com.obsproject.obs-studio*.plist",
+          "rm -f ~/Library/LaunchAgents/com.obsproject.obs-studio*.plist"
+        ]
+      }
+    },
+    {
+      "id": "handbrake",
+      "name": "HandBrake",
+      "vendor": "HandBrake Team",
+      "category": "media",
+      "risk": "low",
+      "pattern": "fr.handbrake.HandBrake.*",
+      "description": "Video transcoder with optional background helper.",
+      "parentApps": ["HandBrake"],
+      "requiresAppInstalled": true,
+      "platform": "macos",
+      "files": [
+        "~/Library/LaunchAgents/fr.handbrake.HandBrake.helper.plist",
+        "~/Library/Application Support/HandBrake/",
+        "~/Library/Caches/fr.handbrake.HandBrake/"
+      ],
+      "removal": {
+        "requiresSudo": false,
+        "commands": [
+          "launchctl unload ~/Library/LaunchAgents/fr.handbrake.HandBrake*.plist",
+          "rm -f ~/Library/LaunchAgents/fr.handbrake.HandBrake*.plist"
+        ]
+      }
+    },
+    {
+      "id": "iina",
+      "name": "IINA",
+      "vendor": "IINA Contributors",
+      "category": "media",
+      "risk": "low",
+      "pattern": "com.colliderli.iina.*",
+      "description": "Modern media player with optional helper.",
+      "parentApps": ["IINA"],
+      "requiresAppInstalled": true,
+      "platform": "macos",
+      "files": [
+        "~/Library/LaunchAgents/com.colliderli.iina.helper.plist",
+        "~/Library/Application Support/com.colliderli.iina/",
+        "~/Library/Caches/com.colliderli.iina/"
+      ],
+      "removal": {
+        "requiresSudo": false,
+        "commands": [
+          "launchctl unload ~/Library/LaunchAgents/com.colliderli.iina*.plist",
+          "rm -f ~/Library/LaunchAgents/com.colliderli.iina*.plist"
+        ]
+      }
+    },
+    {
+      "id": "xcode-simulators",
+      "name": "Xcode Simulators",
+      "vendor": "Apple",
+      "category": "development-tools",
+      "risk": "medium",
+      "pattern": "com.apple.CoreSimulator.*",
+      "description": "iOS/watchOS simulators that can consume 50+ GB of disk space.",
+      "parentApps": ["Xcode"],
+      "requiresAppInstalled": true,
+      "platform": "macos",
+      "files": [
+        "~/Library/Developer/CoreSimulator/",
+        "~/Library/Developer/XCTestDevices/",
+        "~/Library/Caches/com.apple.dt.Xcode/"
+      ],
+      "removal": {
+        "requiresSudo": false,
+        "commands": [
+          "xcrun simctl delete unavailable",
+          "rm -rf ~/Library/Developer/Xcode/DerivedData"
+        ],
+        "note": "Use 'xcrun simctl list' to see installed simulators"
+      }
+    },
+    {
+      "id": "homebrew-services",
+      "name": "Homebrew Services",
+      "vendor": "Homebrew",
+      "category": "development-tools",
+      "risk": "low",
+      "pattern": "homebrew.mxcl.*",
+      "description": "Background services installed via Homebrew (databases, servers).",
+      "parentApps": ["Homebrew"],
+      "requiresAppInstalled": true,
+      "platform": "macos",
+      "files": [
+        "~/Library/LaunchAgents/homebrew.mxcl.*.plist",
+        "/Library/LaunchDaemons/homebrew.mxcl.*.plist"
+      ],
+      "removal": {
+        "requiresSudo": false,
+        "commands": [
+          "brew services list",
+          "brew services stop <service>",
+          "brew services cleanup"
+        ],
+        "note": "List services with 'brew services list' first"
+      }
+    },
+    {
+      "id": "postgresql",
+      "name": "PostgreSQL",
+      "vendor": "PostgreSQL Global Development Group",
+      "category": "development-tools",
+      "risk": "low",
+      "pattern": "org.postgresql.*",
+      "description": "Database server with background daemon.",
+      "parentApps": ["PostgreSQL.app", "Postgres.app"],
+      "requiresAppInstalled": true,
+      "platform": "macos",
+      "files": [
+        "~/Library/LaunchAgents/org.postgresql.postgres.plist",
+        "~/Library/Application Support/Postgres/",
+        "~/Library/PostgreSQL/"
+      ],
+      "removal": {
+        "requiresSudo": false,
+        "commands": [
+          "launchctl unload ~/Library/LaunchAgents/org.postgresql.*.plist",
+          "rm -f ~/Library/LaunchAgents/org.postgresql.*.plist"
+        ],
+        "warning": "Backup databases before removal!"
+      }
+    },
+    {
+      "id": "mongodb",
+      "name": "MongoDB",
+      "vendor": "MongoDB Inc",
+      "category": "development-tools",
+      "risk": "low",
+      "pattern": "org.mongodb.*",
+      "description": "Document database with background daemon.",
+      "parentApps": ["MongoDB"],
+      "requiresAppInstalled": true,
+      "platform": "macos",
+      "files": [
+        "~/Library/LaunchAgents/org.mongodb.mongod.plist",
+        "/usr/local/var/mongodb/"
+      ],
+      "removal": {
+        "requiresSudo": false,
+        "commands": [
+          "launchctl unload ~/Library/LaunchAgents/org.mongodb.*.plist",
+          "rm -f ~/Library/LaunchAgents/org.mongodb.*.plist"
+        ],
+        "warning": "Backup databases before removal!"
+      }
+    },
+    {
+      "id": "redis",
+      "name": "Redis",
+      "vendor": "Redis Ltd",
+      "category": "development-tools",
+      "risk": "low",
+      "pattern": "io.redis.*",
+      "description": "In-memory data store with background daemon.",
+      "parentApps": ["Redis"],
+      "requiresAppInstalled": true,
+      "platform": "macos",
+      "files": [
+        "~/Library/LaunchAgents/homebrew.mxcl.redis.plist",
+        "/usr/local/var/redis/"
+      ],
+      "removal": {
+        "requiresSudo": false,
+        "commands": [
+          "brew services stop redis",
+          "launchctl unload ~/Library/LaunchAgents/*redis*.plist"
+        ]
+      }
+    },
+    {
+      "id": "mysql",
+      "name": "MySQL",
+      "vendor": "Oracle",
+      "category": "development-tools",
+      "risk": "low",
+      "pattern": "com.mysql.*",
+      "description": "SQL database with background daemon.",
+      "parentApps": ["MySQL"],
+      "requiresAppInstalled": true,
+      "platform": "macos",
+      "files": [
+        "~/Library/LaunchAgents/com.mysql.mysql.plist",
+        "/Library/LaunchDaemons/com.mysql.mysql.plist",
+        "/usr/local/mysql/"
+      ],
+      "removal": {
+        "requiresSudo": true,
+        "commands": [
+          "sudo launchctl unload /Library/LaunchDaemons/com.mysql.*.plist",
+          "launchctl unload ~/Library/LaunchAgents/com.mysql.*.plist"
+        ],
+        "warning": "Backup databases before removal!"
+      }
+    },
+    {
+      "id": "macfuse",
+      "name": "macFUSE",
+      "vendor": "macFUSE",
+      "category": "system-modifications",
+      "risk": "low",
+      "pattern": "io.macfuse.*",
+      "description": "Filesystem extension for mounting various filesystems.",
+      "parentApps": ["macFUSE"],
+      "requiresAppInstalled": true,
+      "platform": "macos",
+      "files": [
+        "/Library/LaunchDaemons/io.macfuse.loader.plist",
+        "/Library/Filesystems/macfuse.fs/",
+        "/Library/PreferencePanes/macFUSE.prefPane"
+      ],
+      "removal": {
+        "requiresSudo": true,
+        "commands": [
+          "sudo launchctl unload /Library/LaunchDaemons/io.macfuse.*.plist"
+        ],
+        "note": "Use official uninstaller for complete removal"
+      }
+    },
+    {
+      "id": "wireshark-bpf",
+      "name": "Wireshark BPF",
+      "vendor": "Wireshark Foundation",
+      "category": "system-modifications",
+      "risk": "low",
+      "pattern": "org.wireshark.ChmodBPF",
+      "description": "Packet capture helper for network analysis.",
+      "parentApps": ["Wireshark"],
+      "requiresAppInstalled": true,
+      "platform": "macos",
+      "files": [
+        "/Library/LaunchDaemons/org.wireshark.ChmodBPF.plist",
+        "/Library/Application Support/Wireshark/"
+      ],
+      "removal": {
+        "requiresSudo": true,
+        "commands": [
+          "sudo launchctl unload /Library/LaunchDaemons/org.wireshark.*.plist",
+          "sudo rm -f /Library/LaunchDaemons/org.wireshark.*.plist"
+        ]
+      }
+    },
+    {
+      "id": "mega-sync",
+      "name": "MEGA Sync",
+      "vendor": "MEGA Ltd",
+      "category": "cloud-storage",
+      "risk": "low",
+      "pattern": "mega.mac.*",
+      "description": "Cloud storage sync with background updater.",
+      "parentApps": ["MEGA"],
+      "requiresAppInstalled": false,
+      "platform": "macos",
+      "files": [
+        "~/Library/LaunchAgents/mega.mac.MEGAupdater.plist",
+        "~/Library/Application Support/Mega Limited/MEGAsync/",
+        "~/Library/Caches/mega.mac.MEGAsync/"
+      ],
+      "removal": {
+        "requiresSudo": false,
+        "commands": [
+          "launchctl unload ~/Library/LaunchAgents/mega.mac.*.plist",
+          "rm -f ~/Library/LaunchAgents/mega.mac.*.plist"
+        ]
+      }
+    },
+    {
+      "id": "pcloud",
+      "name": "pCloud Drive",
+      "vendor": "pCloud AG",
+      "category": "cloud-storage",
+      "risk": "low",
+      "pattern": "com.pcloud.*",
+      "description": "Cloud storage with background sync daemon.",
+      "parentApps": ["pCloud Drive"],
+      "requiresAppInstalled": false,
+      "platform": "macos",
+      "files": [
+        "~/Library/LaunchAgents/com.pcloud.pcloud.drive.plist",
+        "~/Library/Application Support/pCloud Drive/",
+        "~/Library/Caches/com.pcloud.pcloud/"
+      ],
+      "removal": {
+        "requiresSudo": false,
+        "commands": [
+          "launchctl unload ~/Library/LaunchAgents/com.pcloud.*.plist",
+          "rm -f ~/Library/LaunchAgents/com.pcloud.*.plist"
+        ]
+      }
+    },
+    {
+      "id": "sync-com",
+      "name": "Sync.com",
+      "vendor": "Sync.com Inc",
+      "category": "cloud-storage",
+      "risk": "low",
+      "pattern": "com.sync.sync-desktop.*",
+      "description": "Secure cloud storage with background sync.",
+      "parentApps": ["Sync"],
+      "requiresAppInstalled": false,
+      "platform": "macos",
+      "files": [
+        "~/Library/LaunchAgents/com.sync.sync-desktop.helper.plist",
+        "~/Library/Application Support/Sync/",
+        "~/Library/Caches/com.sync.sync-desktop/"
+      ],
+      "removal": {
+        "requiresSudo": false,
+        "commands": [
+          "launchctl unload ~/Library/LaunchAgents/com.sync.sync-desktop*.plist",
+          "rm -f ~/Library/LaunchAgents/com.sync.sync-desktop*.plist"
+        ]
+      }
+    },
+    {
+      "id": "vmware-fusion",
+      "name": "VMware Fusion",
+      "vendor": "VMware/Broadcom",
+      "category": "development-tools",
+      "risk": "low",
+      "pattern": "com.vmware.*",
+      "description": "Desktop hypervisor with privileged helpers for disk, VM, and mount operations.",
+      "parentApps": ["VMware Fusion"],
+      "requiresAppInstalled": true,
+      "platform": "macos",
+      "files": [
+        "/Library/LaunchDaemons/com.vmware.DiskHelper.plist",
+        "/Library/LaunchDaemons/com.vmware.IDHelper.plist",
+        "/Library/LaunchDaemons/com.vmware.MountHelper.plist",
+        "/Library/PrivilegedHelperTools/com.vmware.*",
+        "~/Library/Application Support/VMware Fusion/"
+      ],
+      "removal": {
+        "requiresSudo": true,
+        "commands": [
+          "sudo launchctl unload /Library/LaunchDaemons/com.vmware.*.plist",
+          "sudo rm -f /Library/LaunchDaemons/com.vmware.*.plist",
+          "sudo rm -f /Library/PrivilegedHelperTools/com.vmware.*"
+        ]
+      }
+    },
+    {
+      "id": "perplexity-ai",
+      "name": "Perplexity AI",
+      "vendor": "Perplexity AI",
+      "category": "communication",
+      "risk": "low",
+      "pattern": "ai.perplexity.*",
+      "description": "AI assistant with XPC helper for browser extension communication.",
+      "parentApps": ["Perplexity"],
+      "requiresAppInstalled": true,
+      "platform": "macos",
+      "files": [
+        "~/Library/LaunchAgents/ai.perplexity.xpc.plist",
+        "~/Library/Application Support/Perplexity/",
+        "~/Library/Caches/ai.perplexity.*/"
+      ],
+      "removal": {
+        "requiresSudo": false,
+        "commands": [
+          "launchctl unload ~/Library/LaunchAgents/ai.perplexity.*.plist",
+          "rm -f ~/Library/LaunchAgents/ai.perplexity.*.plist",
+          "rm -rf ~/Library/Application\\ Support/Perplexity"
+        ]
+      }
+    }
+  ],
+  "searchIndex": {
+    "byCategory": {
+      "update-services": ["google-keystone", "adobe-armdc", "microsoft-autoupdate", "jetbrains-toolbox", "brave-update", "firefox-update"],
+      "telemetry": ["adobe-ags", "adobe-gc-invoker", "ccleaner"],
+      "background-services": ["zoom-daemon", "spotify-helper"],
+      "system-modifications": ["macfuse", "wireshark-bpf"],
+      "development-tools": ["docker-desktop", "xcode-simulators", "homebrew-services", "postgresql", "mongodb", "redis", "mysql", "vmware-fusion"],
+      "communication": ["slack", "discord", "microsoft-teams", "telegram", "whatsapp", "signal", "webex", "skype", "perplexity-ai"],
+      "cloud-storage": ["dropbox", "onedrive", "google-drive", "box-drive", "mega-sync", "pcloud", "sync-com"],
+      "media": ["vlc", "plex-media-server", "obs-studio", "handbrake", "iina"],
+      "security": ["1password", "bitwarden", "lastpass", "nordvpn", "expressvpn", "surfshark", "tunnelblick", "tailscale", "little-snitch", "malwarebytes", "avast"]
+    },
+    "byRisk": {
+      "high": ["adobe-ags", "adobe-gc-invoker", "ccleaner"],
+      "medium": ["google-keystone", "adobe-armdc", "zoom-daemon", "jetbrains-toolbox", "dropbox", "onedrive", "google-drive", "box-drive", "microsoft-teams", "xcode-simulators", "webex", "skype", "lastpass", "nordvpn", "expressvpn", "surfshark", "avast"],
+      "low": ["microsoft-autoupdate", "spotify-helper", "brave-update", "firefox-update", "docker-desktop", "slack", "discord", "telegram", "whatsapp", "signal", "1password", "bitwarden", "tunnelblick", "tailscale", "little-snitch", "malwarebytes", "vlc", "plex-media-server", "obs-studio", "handbrake", "iina", "homebrew-services", "postgresql", "mongodb", "redis", "mysql", "macfuse", "wireshark-bpf", "mega-sync", "pcloud", "sync-com", "vmware-fusion", "perplexity-ai"]
+    },
+    "byVendor": {
+      "google": ["google-keystone", "google-drive"],
+      "adobe": ["adobe-ags", "adobe-gc-invoker", "adobe-armdc"],
+      "microsoft": ["microsoft-autoupdate", "onedrive", "microsoft-teams", "skype"],
+      "apple": ["xcode-simulators"],
+      "meta": ["whatsapp"]
+    }
+  },
+  "detectionPatterns": {
+    "launchAgentsUser": "~/Library/LaunchAgents/*.plist",
+    "launchAgentsSystem": "/Library/LaunchAgents/*.plist",
+    "launchDaemons": "/Library/LaunchDaemons/*.plist",
+    "privilegedHelpers": "/Library/PrivilegedHelperTools/*"
+  },
+  "commands": {
+    "listUserAgents": "ls -la ~/Library/LaunchAgents/",
+    "listSystemAgents": "ls -la /Library/LaunchAgents/",
+    "listDaemons": "sudo ls -la /Library/LaunchDaemons/",
+    "findOrphans": "for plist in ~/Library/LaunchAgents/*.plist; do bundle_id=$(basename \"$plist\" .plist); mdfind \"kMDItemCFBundleIdentifier == '$bundle_id'\" 2>/dev/null | grep -q . || echo \"Orphan: $plist\"; done",
+    "listRunning": "launchctl list | grep -v \"^-\" | grep -v \"com.apple\""
+  }
+}

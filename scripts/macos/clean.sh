@@ -1,32 +1,107 @@
 #!/bin/bash
 # CClean-Killer - Safe Cleanup Script for macOS
-# Removes caches and orphaned data safely
+# Removes caches, orphaned data, and parasites safely
+# Version: 2.0.0
 
-set -e
+set -euo pipefail
 
-# Colors
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-NC='\033[0m'
+# =============================================================================
+# INITIALIZATION
+# =============================================================================
 
-# Flags
-DRY_RUN=false
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/lib/common.sh"
+
+init_common
+
+# =============================================================================
+# SCRIPT-SPECIFIC CONFIGURATION
+# =============================================================================
+
+# Cleanup targets
 CLEAN_CACHES=false
+CLEAN_LOGS=false
 CLEAN_ORPHANS=false
 CLEAN_DEV=false
+CLEAN_PARASITES=false
 CLEAN_ALL=false
 
-# Parse arguments
+# Tracking
+TOTAL_FREED_KB=0
+ITEMS_CLEANED=0
+ERRORS_COUNT=0
+
+# Safety
+CONFIRM_DESTRUCTIVE=true
+BACKUP_BEFORE_CLEAN=false
+BACKUP_DIR=""
+
+# Skip patterns for caches that should not be cleaned
+declare -a CACHE_SKIP_PATTERNS=(
+    "CloudKit"
+    "com.apple.HomeKit"
+    "com.apple.Safari"
+    "GeoServices"
+    "com.apple.iCloud"
+)
+
+# =============================================================================
+# HELP
+# =============================================================================
+
+show_help() {
+    cat << EOF
+Usage: $(basename "$0") [OPTIONS]
+
+Safely removes caches, orphaned data, and parasites from macOS.
+
+Cleanup Targets:
+  --caches          Clean user caches (~/Library/Caches)
+  --logs            Clean log files (~/Library/Logs)
+  --orphans         Clean orphaned application data
+  --dev             Clean developer tool caches (npm, pip, brew, etc.)
+  --parasites       Remove orphan LaunchAgents/Daemons (interactive)
+  --all             Clean all of the above
+
+Safety Options:
+  --no-confirm      Skip confirmation for destructive operations
+  --backup          Create backup before cleaning (to ~/.cclean-backup)
+  --backup-dir DIR  Specify backup directory
+
+$(print_common_options)
+
+Examples:
+  $(basename "$0") --caches                    # Clean caches only
+  $(basename "$0") --all --dry-run             # Preview all cleanup
+  $(basename "$0") --dev --no-confirm          # Clean dev caches, no prompts
+  $(basename "$0") --all --backup              # Full clean with backup
+  $(basename "$0") --json --all                # JSON output for automation
+
+Notes:
+  - System caches and critical files are never touched
+  - Use --dry-run first to see what would be cleaned
+  - Some operations may require manual app restart
+
+EOF
+    exit 0
+}
+
+# =============================================================================
+# ARGUMENT PARSING
+# =============================================================================
+
+parse_common_args "$@"
+$SHOW_HELP && show_help
+set -- "${REMAINING_ARGS[@]}"
+
 while [[ $# -gt 0 ]]; do
-    case $1 in
-        --dry-run)
-            DRY_RUN=true
-            shift
-            ;;
+    case "$1" in
         --caches)
             CLEAN_CACHES=true
+            shift
+            ;;
+        --logs)
+            CLEAN_LOGS=true
             shift
             ;;
         --orphans)
@@ -37,171 +112,592 @@ while [[ $# -gt 0 ]]; do
             CLEAN_DEV=true
             shift
             ;;
+        --parasites)
+            CLEAN_PARASITES=true
+            shift
+            ;;
         --all)
             CLEAN_ALL=true
             shift
             ;;
+        --no-confirm)
+            CONFIRM_DESTRUCTIVE=false
+            shift
+            ;;
+        --backup)
+            BACKUP_BEFORE_CLEAN=true
+            BACKUP_DIR="$HOME/.cclean-backup/$(date +%Y%m%d_%H%M%S)"
+            shift
+            ;;
+        --backup-dir)
+            BACKUP_BEFORE_CLEAN=true
+            BACKUP_DIR="${2:-}"
+            if [[ -z "$BACKUP_DIR" ]]; then
+                log_error "--backup-dir requires a directory path"
+                exit $EXIT_USAGE
+            fi
+            shift 2
+            ;;
+        -h|--help)
+            show_help
+            ;;
         *)
-            echo "Unknown option: $1"
-            echo "Usage: $0 [--dry-run] [--caches] [--orphans] [--dev] [--all]"
-            exit 1
+            log_error "Unknown option: $1"
+            echo "Use --help for usage information"
+            exit $EXIT_USAGE
             ;;
     esac
 done
 
-# If no specific flag, clean all
-if ! $CLEAN_CACHES && ! $CLEAN_ORPHANS && ! $CLEAN_DEV; then
-    CLEAN_ALL=true
+# If no specific target, require explicit flag
+if ! $CLEAN_CACHES && ! $CLEAN_LOGS && ! $CLEAN_ORPHANS && ! $CLEAN_DEV && ! $CLEAN_PARASITES && ! $CLEAN_ALL; then
+    log_error "No cleanup target specified"
+    echo "Use --caches, --logs, --orphans, --dev, --parasites, or --all"
+    echo "Run with --help for more information"
+    exit $EXIT_USAGE
 fi
 
+# If --all, enable everything
 if $CLEAN_ALL; then
     CLEAN_CACHES=true
+    CLEAN_LOGS=true
     CLEAN_ORPHANS=true
     CLEAN_DEV=true
+    CLEAN_PARASITES=true
 fi
 
-echo -e "${BLUE}╔══════════════════════════════════════════╗${NC}"
-echo -e "${BLUE}║       CClean-Killer - Safe Cleanup       ║${NC}"
-echo -e "${BLUE}╚══════════════════════════════════════════╝${NC}"
-echo ""
+# =============================================================================
+# UTILITY FUNCTIONS
+# =============================================================================
 
-if $DRY_RUN; then
-    echo -e "${YELLOW}⚠️  DRY RUN MODE - No files will be deleted${NC}"
-    echo ""
-fi
-
-# Track total freed
-total_freed=0
-
-# Function to get directory size in bytes
-get_size_bytes() {
-    du -sk "$1" 2>/dev/null | cut -f1 || echo "0"
+# Check if path matches skip pattern
+should_skip_cache() {
+    local name="$1"
+    for pattern in "${CACHE_SKIP_PATTERNS[@]}"; do
+        if [[ "$name" == *"$pattern"* ]]; then
+            return 0
+        fi
+    done
+    return 1
 }
 
-# Function to format size
-format_size() {
-    local bytes=$1
-    if [ $bytes -gt 1048576 ]; then
-        echo "$(echo "scale=2; $bytes/1048576" | bc) GB"
-    elif [ $bytes -gt 1024 ]; then
-        echo "$(echo "scale=2; $bytes/1024" | bc) MB"
+# Confirm action with user
+confirm_action() {
+    local message="$1"
+
+    if ! $CONFIRM_DESTRUCTIVE || $DRY_RUN || $QUIET; then
+        return 0
+    fi
+
+    echo -e "${YELLOW}$message${NC}"
+    read -r -p "Continue? [y/N] " response
+    case "$response" in
+        [yY][eE][sS]|[yY]) return 0 ;;
+        *) return 1 ;;
+    esac
+}
+
+# Backup a path before removal
+backup_path() {
+    local path="$1"
+
+    if ! $BACKUP_BEFORE_CLEAN; then
+        return
+    fi
+
+    if [[ ! -e "$path" ]]; then
+        return
+    fi
+
+    local rel_path="${path#$HOME/}"
+    local backup_dest="$BACKUP_DIR/$rel_path"
+    local backup_parent
+    backup_parent=$(dirname "$backup_dest")
+
+    mkdir -p "$backup_parent"
+
+    if cp -R "$path" "$backup_dest" 2>/dev/null; then
+        log_verbose "Backed up: $path"
     else
-        echo "${bytes} KB"
+        log_warn "Failed to backup: $path"
     fi
 }
 
-# Function to safely remove
-safe_remove() {
+# Remove path with tracking
+remove_with_tracking() {
     local path="$1"
-    local desc="$2"
+    local description="${2:-$path}"
 
-    if [ -e "$path" ]; then
-        local size=$(get_size_bytes "$path")
-        local size_formatted=$(format_size $size)
+    if [[ ! -e "$path" ]]; then
+        return 0
+    fi
 
-        if $DRY_RUN; then
-            echo -e "${YELLOW}Would remove:${NC} $desc ($size_formatted)"
-            echo "  Path: $path"
-        else
-            echo -e "${GREEN}Removing:${NC} $desc ($size_formatted)"
-            rm -rf "$path"
-            total_freed=$((total_freed + size))
+    local size_kb
+    size_kb=$(get_size_kb "$path")
+    local size_human
+    size_human=$(format_size "$size_kb")
+
+    if $DRY_RUN; then
+        log_info "Would remove: $description ($size_human)"
+        TOTAL_FREED_KB=$((TOTAL_FREED_KB + size_kb))
+        ((ITEMS_CLEANED++)) || true
+
+        if $JSON_OUTPUT; then
+            json_add_item "$(json_object \
+                "action" "would_remove" \
+                "path" "$path" \
+                "description" "$description" \
+                "size" "$size_human" \
+                "size_kb" "$size_kb")"
+        fi
+        return 0
+    fi
+
+    # Backup if enabled
+    backup_path "$path"
+
+    log_info "Removing: $description ($size_human)"
+
+    if rm -rf "$path" 2>/dev/null; then
+        TOTAL_FREED_KB=$((TOTAL_FREED_KB + size_kb))
+        ((ITEMS_CLEANED++)) || true
+        log_success "Removed: $description"
+
+        if $JSON_OUTPUT; then
+            json_add_item "$(json_object \
+                "action" "removed" \
+                "path" "$path" \
+                "description" "$description" \
+                "size" "$size_human" \
+                "size_kb" "$size_kb")"
+        fi
+    else
+        ((ERRORS_COUNT++)) || true
+        log_error "Failed to remove: $path"
+
+        if $JSON_OUTPUT; then
+            json_add_item "$(json_object \
+                "action" "failed" \
+                "path" "$path" \
+                "description" "$description" \
+                "error" "Permission denied or in use")"
         fi
     fi
 }
 
-# ============================================
-# CACHES
-# ============================================
-if $CLEAN_CACHES; then
-    echo -e "${GREEN}🗑️  Cleaning Caches...${NC}"
-    echo "────────────────────────────────────────────"
+# =============================================================================
+# CLEANUP FUNCTIONS
+# =============================================================================
 
-    # User caches (always safe)
-    for cache in ~/Library/Caches/*/; do
-        if [ -d "$cache" ]; then
-            name=$(basename "$cache")
-            # Skip critical caches
-            if [[ "$name" != "CloudKit" ]] && [[ "$name" != "com.apple.HomeKit" ]]; then
-                safe_remove "$cache" "Cache: $name"
+# Clean user caches
+clean_caches() {
+    print_section "Cleaning User Caches" "[CACHE]"
+
+    local base_path="$HOME/Library/Caches"
+
+    if [[ ! -d "$base_path" ]]; then
+        log_warn "Caches directory not found"
+        return
+    fi
+
+    local count=0
+
+    for cache in "$base_path"/*/; do
+        [[ ! -d "$cache" ]] && continue
+
+        local name
+        name=$(basename "$cache")
+
+        if should_skip_cache "$name"; then
+            log_verbose "Skipping protected cache: $name"
+            continue
+        fi
+
+        remove_with_tracking "$cache" "Cache: $name"
+        ((count++))
+    done
+
+    if [[ $count -eq 0 ]] && ! $JSON_OUTPUT; then
+        echo "  No caches to clean"
+    fi
+}
+
+# Clean log files
+clean_logs() {
+    print_section "Cleaning Log Files" "[LOG]"
+
+    local base_path="$HOME/Library/Logs"
+
+    if [[ ! -d "$base_path" ]]; then
+        log_warn "Logs directory not found"
+        return
+    fi
+
+    local count=0
+
+    for log in "$base_path"/*/; do
+        [[ ! -d "$log" ]] && continue
+
+        local name
+        name=$(basename "$log")
+
+        remove_with_tracking "$log" "Logs: $name"
+        ((count++))
+    done
+
+    # Also clean individual log files
+    for log_file in "$base_path"/*.log; do
+        [[ ! -f "$log_file" ]] && continue
+
+        local name
+        name=$(basename "$log_file")
+
+        remove_with_tracking "$log_file" "Log: $name"
+        ((count++))
+    done
+
+    if [[ $count -eq 0 ]] && ! $JSON_OUTPUT; then
+        echo "  No logs to clean"
+    fi
+}
+
+# Clean orphaned application data (uses find-orphans.sh logic)
+clean_orphans() {
+    print_section "Cleaning Orphaned Data" "[ORPHAN]"
+
+    if ! $QUIET && ! $JSON_OUTPUT; then
+        log_warn "This will remove data for applications that are no longer installed"
+        if ! confirm_action "Proceed with orphan cleanup?"; then
+            echo "  Skipped"
+            return
+        fi
+    fi
+
+    # Source the common library's app detection
+    local count=0
+
+    # Application Support orphans
+    for dir in "$HOME/Library/Application Support"/*/; do
+        [[ ! -d "$dir" ]] && continue
+
+        local name
+        name=$(basename "$dir")
+
+        # Skip safe names
+        if [[ "$name" == "." ]] || [[ "$name" == ".." ]] || \
+           [[ "$name" == "com.apple."* ]] || [[ "$name" == "Apple" ]] || \
+           [[ "$name" == "AddressBook" ]] || [[ "$name" == "iCloud" ]] || \
+           [[ "$name" == "CloudDocs" ]] || [[ "$name" == "Knowledge" ]]; then
+            continue
+        fi
+
+        if ! is_app_installed "$name"; then
+            remove_with_tracking "$dir" "Orphan (App Support): $name"
+            ((count++))
+        fi
+    done
+
+    # Container orphans
+    for dir in "$HOME/Library/Containers"/*/; do
+        [[ ! -d "$dir" ]] && continue
+
+        local bundle_id
+        bundle_id=$(basename "$dir")
+
+        if [[ "$bundle_id" == "com.apple."* ]]; then
+            continue
+        fi
+
+        local app_name
+        app_name=$(extract_app_name "$bundle_id")
+
+        if ! is_app_installed "$app_name"; then
+            remove_with_tracking "$dir" "Orphan (Container): $bundle_id"
+            ((count++))
+        fi
+    done
+
+    # Saved Application State orphans
+    for dir in "$HOME/Library/Saved Application State"/*/; do
+        [[ ! -d "$dir" ]] && continue
+
+        local bundle_id
+        bundle_id=$(basename "$dir" .savedState)
+
+        if [[ "$bundle_id" == "com.apple."* ]]; then
+            continue
+        fi
+
+        local app_name
+        app_name=$(extract_app_name "$bundle_id")
+
+        if ! is_app_installed "$app_name"; then
+            remove_with_tracking "$dir" "Orphan (Saved State): $bundle_id"
+            ((count++))
+        fi
+    done
+
+    if [[ $count -eq 0 ]] && ! $JSON_OUTPUT; then
+        echo "  No orphans to clean"
+    fi
+}
+
+# Clean developer caches
+clean_dev() {
+    print_section "Cleaning Developer Caches" "[DEV]"
+
+    local count=0
+
+    # npm cache
+    if [[ -d "$HOME/.npm/_cacache" ]]; then
+        remove_with_tracking "$HOME/.npm/_cacache" "npm cache"
+        ((count++))
+    fi
+
+    # pnpm store
+    if [[ -d "$HOME/Library/pnpm/store" ]]; then
+        remove_with_tracking "$HOME/Library/pnpm/store" "pnpm store"
+        ((count++))
+    fi
+
+    # pip cache
+    if [[ -d "$HOME/Library/Caches/pip" ]]; then
+        remove_with_tracking "$HOME/Library/Caches/pip" "pip cache"
+        ((count++))
+    fi
+
+    # Cargo registry cache
+    if [[ -d "$HOME/.cargo/registry/cache" ]]; then
+        remove_with_tracking "$HOME/.cargo/registry/cache" "Cargo registry cache"
+        ((count++))
+    fi
+
+    # Gradle caches
+    if [[ -d "$HOME/.gradle/caches" ]]; then
+        remove_with_tracking "$HOME/.gradle/caches" "Gradle caches"
+        ((count++))
+    fi
+
+    # CocoaPods cache
+    if [[ -d "$HOME/Library/Caches/CocoaPods" ]]; then
+        remove_with_tracking "$HOME/Library/Caches/CocoaPods" "CocoaPods cache"
+        ((count++))
+    fi
+
+    # Xcode DerivedData
+    if [[ -d "$HOME/Library/Developer/Xcode/DerivedData" ]]; then
+        local size
+        size=$(get_size_human "$HOME/Library/Developer/Xcode/DerivedData")
+        if ! $QUIET && ! $JSON_OUTPUT; then
+            log_warn "Xcode DerivedData ($size) - cleaning may slow next build"
+        fi
+        if $DRY_RUN || confirm_action "Clean Xcode DerivedData?"; then
+            remove_with_tracking "$HOME/Library/Developer/Xcode/DerivedData" "Xcode DerivedData"
+            ((count++))
+        fi
+    fi
+
+    # Homebrew cleanup
+    if command -v brew &>/dev/null; then
+        if $DRY_RUN; then
+            log_info "Would run: brew cleanup --prune=all"
+        else
+            log_info "Running: brew cleanup --prune=all"
+            if brew cleanup --prune=all 2>/dev/null; then
+                log_success "Homebrew cleanup complete"
+                ((count++))
+            else
+                log_warn "Homebrew cleanup had issues"
+            fi
+        fi
+
+        if $JSON_OUTPUT; then
+            json_add_item "$(json_object \
+                "action" "$(if $DRY_RUN; then echo "would_run"; else echo "ran"; fi)" \
+                "command" "brew cleanup --prune=all" \
+                "description" "Homebrew cleanup")"
+        fi
+    fi
+
+    if [[ $count -eq 0 ]] && ! $JSON_OUTPUT; then
+        echo "  No developer caches to clean"
+    fi
+}
+
+# Clean parasites (LaunchAgents/Daemons)
+clean_parasites() {
+    print_section "Cleaning Parasites" "[PARASITE]"
+
+    if ! $QUIET && ! $JSON_OUTPUT; then
+        log_warn "This will unload and remove orphan LaunchAgents/Daemons"
+        log_warn "System LaunchDaemons require sudo (will be skipped)"
+        if ! confirm_action "Proceed with parasite cleanup?"; then
+            echo "  Skipped"
+            return
+        fi
+    fi
+
+    local count=0
+
+    # User LaunchAgents only (no sudo required)
+    local base_path="$HOME/Library/LaunchAgents"
+
+    if [[ ! -d "$base_path" ]]; then
+        log_verbose "No User LaunchAgents directory"
+        return
+    fi
+
+    for plist in "$base_path"/*.plist; do
+        [[ ! -f "$plist" ]] && continue
+
+        local name
+        name=$(basename "$plist" .plist)
+
+        # Skip Apple
+        if [[ "$name" == "com.apple."* ]]; then
+            continue
+        fi
+
+        local app_name
+        app_name=$(extract_app_name "$name")
+        local company
+        company=$(extract_company "$name")
+
+        if ! is_app_installed "$app_name" && ! is_app_installed "$company"; then
+            if $DRY_RUN; then
+                log_info "Would unload and remove: $name"
+                ((count++))
+
+                if $JSON_OUTPUT; then
+                    json_add_item "$(json_object \
+                        "action" "would_remove" \
+                        "path" "$plist" \
+                        "description" "LaunchAgent: $name")"
+                fi
+            else
+                # Unload first
+                if launchctl unload "$plist" 2>/dev/null; then
+                    log_verbose "Unloaded: $name"
+                fi
+
+                # Then remove
+                if rm -f "$plist" 2>/dev/null; then
+                    log_success "Removed LaunchAgent: $name"
+                    ((count++))
+
+                    if $JSON_OUTPUT; then
+                        json_add_item "$(json_object \
+                            "action" "removed" \
+                            "path" "$plist" \
+                            "description" "LaunchAgent: $name")"
+                    fi
+                else
+                    log_error "Failed to remove: $plist"
+                    ((ERRORS_COUNT++)) || true
+                fi
             fi
         fi
     done
 
-    # Logs (safe to remove old ones)
-    echo ""
-    echo -e "${GREEN}📝 Cleaning Logs...${NC}"
-    echo "────────────────────────────────────────────"
+    if [[ $count -eq 0 ]] && ! $JSON_OUTPUT; then
+        echo "  No user parasites to clean"
+        echo "  (System parasites require sudo - run find-parasites.sh for details)"
+    fi
+}
 
-    for log in ~/Library/Logs/*/; do
-        if [ -d "$log" ]; then
-            name=$(basename "$log")
-            safe_remove "$log" "Logs: $name"
-        fi
-    done
+# =============================================================================
+# MAIN EXECUTION
+# =============================================================================
 
-    echo ""
-fi
+main() {
+    log_verbose "Starting cleanup"
 
-# ============================================
-# DEV TOOLS
-# ============================================
-if $CLEAN_DEV; then
-    echo -e "${GREEN}🛠️  Cleaning Developer Caches...${NC}"
-    echo "────────────────────────────────────────────"
+    print_header "Safe Cleanup"
 
-    # npm cache
-    if [ -d ~/.npm/_cacache ]; then
-        safe_remove ~/.npm/_cacache "npm cache"
+    if $DRY_RUN && ! $JSON_OUTPUT; then
+        echo -e "${YELLOW}DRY RUN MODE - No files will be deleted${NC}"
+        echo ""
     fi
 
-    # pnpm cache
-    if [ -d ~/Library/pnpm/store ]; then
-        safe_remove ~/Library/pnpm/store "pnpm store"
+    if $BACKUP_BEFORE_CLEAN && ! $DRY_RUN; then
+        log_info "Backup directory: $BACKUP_DIR"
+        mkdir -p "$BACKUP_DIR"
     fi
 
-    # Homebrew cleanup
-    if command -v brew &> /dev/null; then
+    # Show what we're cleaning
+    if ! $JSON_OUTPUT; then
+        echo "Cleanup targets:"
+        $CLEAN_CACHES && echo "  - User Caches"
+        $CLEAN_LOGS && echo "  - Log Files"
+        $CLEAN_ORPHANS && echo "  - Orphaned Data"
+        $CLEAN_DEV && echo "  - Developer Caches"
+        $CLEAN_PARASITES && echo "  - Parasites (User LaunchAgents)"
+        echo ""
+    fi
+
+    start_spinner "Cleaning..."
+
+    # Run cleanups based on flags
+    $CLEAN_CACHES && clean_caches
+    $CLEAN_LOGS && clean_logs
+    $CLEAN_ORPHANS && clean_orphans
+    $CLEAN_DEV && clean_dev
+    $CLEAN_PARASITES && clean_parasites
+
+    stop_spinner true "Cleanup complete"
+
+    # Output results
+    if $JSON_OUTPUT; then
+        echo "{"
+        echo "  \"version\": \"$CCLEAN_VERSION\","
+        echo "  \"timestamp\": \"$(date -u +"%Y-%m-%dT%H:%M:%SZ")\","
+        echo "  \"dry_run\": $DRY_RUN,"
+        echo "  \"summary\": {"
+        echo "    \"items_cleaned\": $ITEMS_CLEANED,"
+        echo "    \"total_freed_kb\": $TOTAL_FREED_KB,"
+        echo "    \"total_freed\": \"$(format_size $TOTAL_FREED_KB)\","
+        echo "    \"errors\": $ERRORS_COUNT"
+        echo "  },"
+        echo "  \"actions\": ["
+
+        local first=true
+        for item in "${JSON_ITEMS[@]}"; do
+            if ! $first; then
+                echo ","
+            fi
+            first=false
+            printf "    %s" "$item"
+        done
+
+        echo ""
+        echo "  ]"
+        echo "}"
+    else
+        print_summary "Cleanup Summary"
+        echo ""
+
         if $DRY_RUN; then
-            echo -e "${YELLOW}Would run:${NC} brew cleanup --prune=all"
+            echo "  Would clean: $ITEMS_CLEANED items"
+            echo "  Would free:  $(format_size $TOTAL_FREED_KB)"
+            echo ""
+            echo "Run without --dry-run to actually clean."
         else
-            echo "Running: brew cleanup --prune=all"
-            brew cleanup --prune=all 2>/dev/null || true
+            echo "  Items cleaned: $ITEMS_CLEANED"
+            echo "  Space freed:   $(format_size $TOTAL_FREED_KB)"
+
+            if [[ $ERRORS_COUNT -gt 0 ]]; then
+                echo -e "  ${YELLOW}Errors: $ERRORS_COUNT${NC}"
+            fi
+
+            if $BACKUP_BEFORE_CLEAN; then
+                echo ""
+                echo "Backup location: $BACKUP_DIR"
+            fi
         fi
+        echo ""
     fi
 
-    # pip cache
-    if [ -d ~/Library/Caches/pip ]; then
-        safe_remove ~/Library/Caches/pip "pip cache"
-    fi
+    log_verbose "Cleanup completed: $ITEMS_CLEANED items, $(format_size $TOTAL_FREED_KB) freed"
+}
 
-    # Cargo registry cache
-    if [ -d ~/.cargo/registry/cache ]; then
-        safe_remove ~/.cargo/registry/cache "Cargo registry cache"
-    fi
-
-    # Gradle cache
-    if [ -d ~/.gradle/caches ]; then
-        safe_remove ~/.gradle/caches "Gradle caches"
-    fi
-
-    # Maven cache
-    if [ -d ~/.m2/repository ]; then
-        echo -e "${YELLOW}Skipping:${NC} Maven repository (may contain needed dependencies)"
-    fi
-
-    echo ""
-fi
-
-# ============================================
-# SUMMARY
-# ============================================
-echo -e "${BLUE}════════════════════════════════════════════${NC}"
-if $DRY_RUN; then
-    echo -e "${BLUE}Dry run complete. No files were deleted.${NC}"
-    echo -e "${BLUE}Run without --dry-run to actually clean.${NC}"
-else
-    echo -e "${BLUE}Cleanup complete!${NC}"
-    echo -e "${BLUE}Total freed: $(format_size $total_freed)${NC}"
-fi
-echo -e "${BLUE}════════════════════════════════════════════${NC}"
+main "$@"
