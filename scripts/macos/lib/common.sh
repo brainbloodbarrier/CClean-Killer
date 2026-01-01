@@ -403,12 +403,20 @@ safe_remove() {
     log_info "Removing: $desc ($size_human)"
     log_verbose "  Path: $path"
 
-    if rm -rf "$path" 2>/dev/null; then
+    # Capture actual error message instead of suppressing
+    local rm_output
+    rm_output=$(rm -rf "$path" 2>&1)
+    local rm_result=$?
+
+    if [[ $rm_result -eq 0 ]]; then
         log_success "Removed: $desc"
         echo "$size_kb"
     else
+        local error_msg="${rm_output:-Unknown error (exit code: $rm_result)}"
         log_error "Failed to remove: $path"
+        log_error "  Reason: $error_msg"
         echo "0"
+        return 1  # Signal failure to caller
     fi
 }
 
@@ -429,7 +437,7 @@ is_safe_path() {
     # Reject critical user paths
     local home_path="${path#$HOME/}"
     case "$home_path" in
-        Library/Keychains/*|Library/Safari/*)
+        .ssh/*|.gnupg/*|Library/Keychains/*|Library/Safari/*)
             return 1
             ;;
         Documents/*|Desktop/*|Pictures/*|Music/*|Movies/*)

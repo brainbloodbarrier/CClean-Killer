@@ -27,7 +27,12 @@
       "risk": "medium",
       "pattern": "com.google.keystone.*",
       "description": "Google's update mechanism for all Google products. Runs hourly even after all Google apps removed.",
-      "parentApps": ["Chrome", "Google Earth", "Google Drive", "Backup and Sync"],
+      "parentApps": [
+        "Chrome",
+        "Google Earth",
+        "Google Drive",
+        "Backup and Sync"
+      ],
       "requiresAppInstalled": false,
       "platform": "macos",
       "files": [
@@ -56,7 +61,12 @@
       "risk": "high",
       "pattern": "com.adobe.agsservice",
       "description": "License validation service that phones home frequently to verify Adobe software legitimacy.",
-      "parentApps": ["Photoshop", "Illustrator", "Premiere Pro", "Creative Cloud"],
+      "parentApps": [
+        "Photoshop",
+        "Illustrator",
+        "Premiere Pro",
+        "Creative Cloud"
+      ],
       "requiresAppInstalled": false,
       "platform": "macos",
       "files": [
@@ -79,7 +89,9 @@
       "risk": "high",
       "pattern": "com.adobe.GC.Invoker.*",
       "description": "Analytics collection service that sends usage data to Adobe servers.",
-      "parentApps": ["Any Adobe Product"],
+      "parentApps": [
+        "Any Adobe Product"
+      ],
       "requiresAppInstalled": false,
       "platform": "macos",
       "files": [
@@ -102,7 +114,10 @@
       "risk": "medium",
       "pattern": "com.adobe.ARMDC.*",
       "description": "Adobe Remote Management and Diagnostics Client. Handles updates and telemetry relay.",
-      "parentApps": ["Adobe Creative Cloud", "Adobe Reader"],
+      "parentApps": [
+        "Adobe Creative Cloud",
+        "Adobe Reader"
+      ],
       "requiresAppInstalled": false,
       "platform": "macos",
       "files": [
@@ -127,7 +142,9 @@
       "risk": "high",
       "pattern": "com.piriform.ccleaner.*",
       "description": "Ironic - a 'cleaner' app with 6+ persistent background processes for scanning, updates, and telemetry.",
-      "parentApps": ["CCleaner"],
+      "parentApps": [
+        "CCleaner"
+      ],
       "requiresAppInstalled": false,
       "platform": "macos",
       "files": [
@@ -162,7 +179,9 @@
       "risk": "medium",
       "pattern": "us.zoom.*",
       "description": "Video conferencing daemon that runs even when Zoom is not in use. Monitors audio devices.",
-      "parentApps": ["Zoom"],
+      "parentApps": [
+        "Zoom"
+      ],
       "requiresAppInstalled": false,
       "platform": "macos",
       "files": [
@@ -190,7 +209,11 @@
       "risk": "low",
       "pattern": "com.microsoft.update.*",
       "description": "Microsoft's update service for Office, Edge, and other Microsoft products.",
-      "parentApps": ["Microsoft Office", "Microsoft Edge", "OneDrive"],
+      "parentApps": [
+        "Microsoft Office",
+        "Microsoft Edge",
+        "OneDrive"
+      ],
       "requiresAppInstalled": false,
       "platform": "macos",
       "files": [
@@ -215,7 +238,9 @@
       "risk": "low",
       "pattern": "com.spotify.*",
       "description": "Background helper for Spotify web player integration and media key handling.",
-      "parentApps": ["Spotify"],
+      "parentApps": [
+        "Spotify"
+      ],
       "requiresAppInstalled": true,
       "platform": "macos",
       "files": [
@@ -239,7 +264,13 @@
       "risk": "medium",
       "pattern": "com.jetbrains.toolbox.*",
       "description": "IDE manager that runs continuously to manage and update JetBrains products. Includes telemetry.",
-      "parentApps": ["JetBrains Toolbox", "IntelliJ IDEA", "PyCharm", "WebStorm", "PhpStorm"],
+      "parentApps": [
+        "JetBrains Toolbox",
+        "IntelliJ IDEA",
+        "PyCharm",
+        "WebStorm",
+        "PhpStorm"
+      ],
       "requiresAppInstalled": false,
       "platform": "macos",
       "files": [
@@ -268,7 +299,9 @@
       "risk": "low",
       "pattern": "com.docker.*",
       "description": "Container platform with network daemon and helper services. Can use significant resources.",
-      "parentApps": ["Docker Desktop"],
+      "parentApps": [
+        "Docker Desktop"
+      ],
       "requiresAppInstalled": true,
       "platform": "macos",
       "files": [
@@ -302,7 +335,9 @@
       "risk": "medium",
       "pattern": "com.dropbox.*",
       "description": "Cloud storage with aggressive sync daemon and Finder integration. Continuous file monitoring.",
-      "parentApps": ["Dropbox"],
+      "parentApps": [
+        "Dropbox"
+      ],
       "requiresAppInstalled": false,
       "platform": "macos",
       "files": [
@@ -334,7 +369,10 @@
       "risk": "medium",
       "pattern": "com.microsoft.OneDrive.*",
       "description": "Cloud storage sync service with Finder integration and background update daemon.",
-      "parentApps": ["OneDrive", "Microsoft 365"],
+      "parentApps": [
+        "OneDrive",
+        "Microsoft 365"
+      ],
       "requiresAppInstalled": false,
       "platform": "macos",
       "files": [
@@ -363,7 +401,9 @@
       "risk": "medium",
       "pattern": "com.google.drivefs.*",
       "description": "Google Drive File Stream with background sync and Finder integration.",
-      "parentApps": ["Google Drive"],
+      "parentApps": [
+        "Google Drive"
+      ],
       "requiresAppInstalled": false,
       "platform": "macos",
       "files": [
@@ -390,7 +430,9 @@
       "risk": "medium",
       "pattern": "com.box.desktop.*",
       "description": "Enterprise cloud storage with background sync daemon.",
-      "parentApps": ["Box Drive"],
+      "parentApps": [
+        "Box Drive"
+      ],
       "requiresAppInstalled": false,
       "platform": "macos",
       "files": [
@@ -417,7 +459,9 @@
       "risk": "low",
       "pattern": "com.tinyspeck.slackmacgap.*",
       "description": "Team communication with background notification helper and presence detection.",
-      "parentApps": ["Slack"],
+      "parentApps": [
+        "Slack"
+      ],
       "requiresAppInstalled": true,
       "platform": "macos",
       "files": [
@@ -444,7 +488,9 @@
       "risk": "low",
       "pattern": "com.hnc.Discord.*",
       "description": "Gaming communication with auto-update service and rich presence integration.",
-      "parentApps": ["Discord"],
+      "parentApps": [
+        "Discord"
+      ],
       "requiresAppInstalled": false,
       "platform": "macos",
       "files": [
@@ -472,7 +518,9 @@
       "risk": "medium",
       "pattern": "com.microsoft.teams.*",
       "description": "Enterprise communication with extensive background services and persistent WebRTC connections.",
-      "parentApps": ["Microsoft Teams"],
+      "parentApps": [
+        "Microsoft Teams"
+      ],
       "requiresAppInstalled": false,
       "platform": "macos",
       "files": [
@@ -501,7 +549,10 @@
       "risk": "low",
       "pattern": "ru.keepcoder.Telegram.*",
       "description": "Messaging app with background notification helper.",
-      "parentApps": ["Telegram", "Telegram Desktop"],
+      "parentApps": [
+        "Telegram",
+        "Telegram Desktop"
+      ],
       "requiresAppInstalled": true,
       "platform": "macos",
       "files": [
@@ -525,7 +576,9 @@
       "risk": "low",
       "pattern": "net.whatsapp.WhatsApp.*",
       "description": "WhatsApp desktop with background notification helper.",
-      "parentApps": ["WhatsApp"],
+      "parentApps": [
+        "WhatsApp"
+      ],
       "requiresAppInstalled": true,
       "platform": "macos",
       "files": [
@@ -549,7 +602,9 @@
       "risk": "low",
       "pattern": "org.whispersystems.signal-desktop.*",
       "description": "Secure messaging with background notification helper.",
-      "parentApps": ["Signal"],
+      "parentApps": [
+        "Signal"
+      ],
       "requiresAppInstalled": true,
       "platform": "macos",
       "files": [
@@ -573,7 +628,10 @@
       "risk": "medium",
       "pattern": "com.cisco.webexmeetingsapp.*",
       "description": "Enterprise video conferencing with background daemon and audio monitoring.",
-      "parentApps": ["Webex Meetings", "Webex"],
+      "parentApps": [
+        "Webex Meetings",
+        "Webex"
+      ],
       "requiresAppInstalled": false,
       "platform": "macos",
       "files": [
@@ -599,7 +657,9 @@
       "risk": "medium",
       "pattern": "com.skype.skype.*",
       "description": "Video calling with background notification helper.",
-      "parentApps": ["Skype"],
+      "parentApps": [
+        "Skype"
+      ],
       "requiresAppInstalled": false,
       "platform": "macos",
       "files": [
@@ -623,7 +683,9 @@
       "risk": "low",
       "pattern": "com.brave.update.*",
       "description": "Auto-update service for Brave browser.",
-      "parentApps": ["Brave Browser"],
+      "parentApps": [
+        "Brave Browser"
+      ],
       "requiresAppInstalled": false,
       "platform": "macos",
       "files": [
@@ -646,7 +708,9 @@
       "risk": "low",
       "pattern": "org.mozilla.*",
       "description": "Firefox background update service.",
-      "parentApps": ["Firefox"],
+      "parentApps": [
+        "Firefox"
+      ],
       "requiresAppInstalled": false,
       "platform": "macos",
       "files": [
@@ -669,7 +733,9 @@
       "risk": "low",
       "pattern": "com.1password.*",
       "description": "Password manager with keychain integration and browser helper.",
-      "parentApps": ["1Password"],
+      "parentApps": [
+        "1Password"
+      ],
       "requiresAppInstalled": true,
       "platform": "macos",
       "files": [
@@ -695,7 +761,9 @@
       "risk": "low",
       "pattern": "com.bitwarden.desktop.*",
       "description": "Open source password manager with background helper.",
-      "parentApps": ["Bitwarden"],
+      "parentApps": [
+        "Bitwarden"
+      ],
       "requiresAppInstalled": true,
       "platform": "macos",
       "files": [
@@ -720,7 +788,9 @@
       "risk": "medium",
       "pattern": "com.lastpass.*",
       "description": "Password manager with background sync and browser helper.",
-      "parentApps": ["LastPass"],
+      "parentApps": [
+        "LastPass"
+      ],
       "requiresAppInstalled": false,
       "platform": "macos",
       "files": [
@@ -745,7 +815,9 @@
       "risk": "medium",
       "pattern": "com.nordvpn.*",
       "description": "VPN with privileged helper daemon for network configuration.",
-      "parentApps": ["NordVPN"],
+      "parentApps": [
+        "NordVPN"
+      ],
       "requiresAppInstalled": false,
       "platform": "macos",
       "files": [
@@ -771,7 +843,9 @@
       "risk": "medium",
       "pattern": "com.expressvpn.*",
       "description": "VPN with privileged helper daemon and agent.",
-      "parentApps": ["ExpressVPN"],
+      "parentApps": [
+        "ExpressVPN"
+      ],
       "requiresAppInstalled": false,
       "platform": "macos",
       "files": [
@@ -798,7 +872,9 @@
       "risk": "medium",
       "pattern": "com.surfshark.*",
       "description": "VPN with privileged helper daemon.",
-      "parentApps": ["Surfshark"],
+      "parentApps": [
+        "Surfshark"
+      ],
       "requiresAppInstalled": false,
       "platform": "macos",
       "files": [
@@ -823,7 +899,9 @@
       "risk": "low",
       "pattern": "net.tunnelblick.*",
       "description": "OpenVPN client with background tunnel daemon.",
-      "parentApps": ["Tunnelblick"],
+      "parentApps": [
+        "Tunnelblick"
+      ],
       "requiresAppInstalled": true,
       "platform": "macos",
       "files": [
@@ -847,7 +925,9 @@
       "risk": "low",
       "pattern": "com.tailscale.*",
       "description": "Zero-config VPN with system extension.",
-      "parentApps": ["Tailscale"],
+      "parentApps": [
+        "Tailscale"
+      ],
       "requiresAppInstalled": true,
       "platform": "macos",
       "files": [
@@ -872,7 +952,9 @@
       "risk": "low",
       "pattern": "at.obdev.LittleSnitch*",
       "description": "Network monitor with kernel extension and helper.",
-      "parentApps": ["Little Snitch"],
+      "parentApps": [
+        "Little Snitch"
+      ],
       "requiresAppInstalled": true,
       "platform": "macos",
       "files": [
@@ -897,7 +979,9 @@
       "risk": "low",
       "pattern": "com.malwarebytes.*",
       "description": "Anti-malware with background scan daemon.",
-      "parentApps": ["Malwarebytes"],
+      "parentApps": [
+        "Malwarebytes"
+      ],
       "requiresAppInstalled": false,
       "platform": "macos",
       "files": [
@@ -922,7 +1006,9 @@
       "risk": "medium",
       "pattern": "com.avast.*",
       "description": "Antivirus with multiple background daemons.",
-      "parentApps": ["Avast Security"],
+      "parentApps": [
+        "Avast Security"
+      ],
       "requiresAppInstalled": false,
       "platform": "macos",
       "files": [
@@ -948,7 +1034,9 @@
       "risk": "low",
       "pattern": "org.videolan.vlc.*",
       "description": "Media player with optional update checker.",
-      "parentApps": ["VLC"],
+      "parentApps": [
+        "VLC"
+      ],
       "requiresAppInstalled": true,
       "platform": "macos",
       "files": [
@@ -972,7 +1060,9 @@
       "risk": "low",
       "pattern": "com.plexapp.*",
       "description": "Media server with background streaming daemon.",
-      "parentApps": ["Plex Media Server"],
+      "parentApps": [
+        "Plex Media Server"
+      ],
       "requiresAppInstalled": true,
       "platform": "macos",
       "files": [
@@ -996,7 +1086,9 @@
       "risk": "low",
       "pattern": "com.obsproject.obs-studio.*",
       "description": "Streaming software with virtual camera helper.",
-      "parentApps": ["OBS"],
+      "parentApps": [
+        "OBS"
+      ],
       "requiresAppInstalled": true,
       "platform": "macos",
       "files": [
@@ -1020,7 +1112,9 @@
       "risk": "low",
       "pattern": "fr.handbrake.HandBrake.*",
       "description": "Video transcoder with optional background helper.",
-      "parentApps": ["HandBrake"],
+      "parentApps": [
+        "HandBrake"
+      ],
       "requiresAppInstalled": true,
       "platform": "macos",
       "files": [
@@ -1044,7 +1138,9 @@
       "risk": "low",
       "pattern": "com.colliderli.iina.*",
       "description": "Modern media player with optional helper.",
-      "parentApps": ["IINA"],
+      "parentApps": [
+        "IINA"
+      ],
       "requiresAppInstalled": true,
       "platform": "macos",
       "files": [
@@ -1068,7 +1164,9 @@
       "risk": "medium",
       "pattern": "com.apple.CoreSimulator.*",
       "description": "iOS/watchOS simulators that can consume 50+ GB of disk space.",
-      "parentApps": ["Xcode"],
+      "parentApps": [
+        "Xcode"
+      ],
       "requiresAppInstalled": true,
       "platform": "macos",
       "files": [
@@ -1093,7 +1191,9 @@
       "risk": "low",
       "pattern": "homebrew.mxcl.*",
       "description": "Background services installed via Homebrew (databases, servers).",
-      "parentApps": ["Homebrew"],
+      "parentApps": [
+        "Homebrew"
+      ],
       "requiresAppInstalled": true,
       "platform": "macos",
       "files": [
@@ -1118,7 +1218,10 @@
       "risk": "low",
       "pattern": "org.postgresql.*",
       "description": "Database server with background daemon.",
-      "parentApps": ["PostgreSQL.app", "Postgres.app"],
+      "parentApps": [
+        "PostgreSQL.app",
+        "Postgres.app"
+      ],
       "requiresAppInstalled": true,
       "platform": "macos",
       "files": [
@@ -1143,7 +1246,9 @@
       "risk": "low",
       "pattern": "org.mongodb.*",
       "description": "Document database with background daemon.",
-      "parentApps": ["MongoDB"],
+      "parentApps": [
+        "MongoDB"
+      ],
       "requiresAppInstalled": true,
       "platform": "macos",
       "files": [
@@ -1167,7 +1272,9 @@
       "risk": "low",
       "pattern": "io.redis.*",
       "description": "In-memory data store with background daemon.",
-      "parentApps": ["Redis"],
+      "parentApps": [
+        "Redis"
+      ],
       "requiresAppInstalled": true,
       "platform": "macos",
       "files": [
@@ -1190,7 +1297,9 @@
       "risk": "low",
       "pattern": "com.mysql.*",
       "description": "SQL database with background daemon.",
-      "parentApps": ["MySQL"],
+      "parentApps": [
+        "MySQL"
+      ],
       "requiresAppInstalled": true,
       "platform": "macos",
       "files": [
@@ -1215,7 +1324,9 @@
       "risk": "low",
       "pattern": "io.macfuse.*",
       "description": "Filesystem extension for mounting various filesystems.",
-      "parentApps": ["macFUSE"],
+      "parentApps": [
+        "macFUSE"
+      ],
       "requiresAppInstalled": true,
       "platform": "macos",
       "files": [
@@ -1239,7 +1350,9 @@
       "risk": "low",
       "pattern": "org.wireshark.ChmodBPF",
       "description": "Packet capture helper for network analysis.",
-      "parentApps": ["Wireshark"],
+      "parentApps": [
+        "Wireshark"
+      ],
       "requiresAppInstalled": true,
       "platform": "macos",
       "files": [
@@ -1262,7 +1375,9 @@
       "risk": "low",
       "pattern": "mega.mac.*",
       "description": "Cloud storage sync with background updater.",
-      "parentApps": ["MEGA"],
+      "parentApps": [
+        "MEGA"
+      ],
       "requiresAppInstalled": false,
       "platform": "macos",
       "files": [
@@ -1286,7 +1401,9 @@
       "risk": "low",
       "pattern": "com.pcloud.*",
       "description": "Cloud storage with background sync daemon.",
-      "parentApps": ["pCloud Drive"],
+      "parentApps": [
+        "pCloud Drive"
+      ],
       "requiresAppInstalled": false,
       "platform": "macos",
       "files": [
@@ -1310,7 +1427,9 @@
       "risk": "low",
       "pattern": "com.sync.sync-desktop.*",
       "description": "Secure cloud storage with background sync.",
-      "parentApps": ["Sync"],
+      "parentApps": [
+        "Sync"
+      ],
       "requiresAppInstalled": false,
       "platform": "macos",
       "files": [
@@ -1334,7 +1453,9 @@
       "risk": "low",
       "pattern": "com.vmware.*",
       "description": "Desktop hypervisor with privileged helpers for disk, VM, and mount operations.",
-      "parentApps": ["VMware Fusion"],
+      "parentApps": [
+        "VMware Fusion"
+      ],
       "requiresAppInstalled": true,
       "platform": "macos",
       "files": [
@@ -1361,7 +1482,9 @@
       "risk": "low",
       "pattern": "ai.perplexity.*",
       "description": "AI assistant with XPC helper for browser extension communication.",
-      "parentApps": ["Perplexity"],
+      "parentApps": [
+        "Perplexity"
+      ],
       "requiresAppInstalled": true,
       "platform": "macos",
       "files": [
@@ -1381,27 +1504,161 @@
   ],
   "searchIndex": {
     "byCategory": {
-      "update-services": ["google-keystone", "adobe-armdc", "microsoft-autoupdate", "jetbrains-toolbox", "brave-update", "firefox-update"],
-      "telemetry": ["adobe-ags", "adobe-gc-invoker", "ccleaner"],
-      "background-services": ["zoom-daemon", "spotify-helper"],
-      "system-modifications": ["macfuse", "wireshark-bpf"],
-      "development-tools": ["docker-desktop", "xcode-simulators", "homebrew-services", "postgresql", "mongodb", "redis", "mysql", "vmware-fusion"],
-      "communication": ["slack", "discord", "microsoft-teams", "telegram", "whatsapp", "signal", "webex", "skype", "perplexity-ai"],
-      "cloud-storage": ["dropbox", "onedrive", "google-drive", "box-drive", "mega-sync", "pcloud", "sync-com"],
-      "media": ["vlc", "plex-media-server", "obs-studio", "handbrake", "iina"],
-      "security": ["1password", "bitwarden", "lastpass", "nordvpn", "expressvpn", "surfshark", "tunnelblick", "tailscale", "little-snitch", "malwarebytes", "avast"]
+      "update-services": [
+        "google-keystone",
+        "adobe-armdc",
+        "microsoft-autoupdate",
+        "jetbrains-toolbox",
+        "brave-update",
+        "firefox-update"
+      ],
+      "telemetry": [
+        "adobe-ags",
+        "adobe-gc-invoker",
+        "ccleaner"
+      ],
+      "background-services": [
+        "zoom-daemon",
+        "spotify-helper"
+      ],
+      "system-modifications": [
+        "macfuse",
+        "wireshark-bpf"
+      ],
+      "development-tools": [
+        "docker-desktop",
+        "xcode-simulators",
+        "homebrew-services",
+        "postgresql",
+        "mongodb",
+        "redis",
+        "mysql",
+        "vmware-fusion"
+      ],
+      "communication": [
+        "slack",
+        "discord",
+        "microsoft-teams",
+        "telegram",
+        "whatsapp",
+        "signal",
+        "webex",
+        "skype",
+        "perplexity-ai"
+      ],
+      "cloud-storage": [
+        "dropbox",
+        "onedrive",
+        "google-drive",
+        "box-drive",
+        "mega-sync",
+        "pcloud",
+        "sync-com"
+      ],
+      "media": [
+        "vlc",
+        "plex-media-server",
+        "obs-studio",
+        "handbrake",
+        "iina"
+      ],
+      "security": [
+        "1password",
+        "bitwarden",
+        "lastpass",
+        "nordvpn",
+        "expressvpn",
+        "surfshark",
+        "tunnelblick",
+        "tailscale",
+        "little-snitch",
+        "malwarebytes",
+        "avast"
+      ]
     },
     "byRisk": {
-      "high": ["adobe-ags", "adobe-gc-invoker", "ccleaner"],
-      "medium": ["google-keystone", "adobe-armdc", "zoom-daemon", "jetbrains-toolbox", "dropbox", "onedrive", "google-drive", "box-drive", "microsoft-teams", "xcode-simulators", "webex", "skype", "lastpass", "nordvpn", "expressvpn", "surfshark", "avast"],
-      "low": ["microsoft-autoupdate", "spotify-helper", "brave-update", "firefox-update", "docker-desktop", "slack", "discord", "telegram", "whatsapp", "signal", "1password", "bitwarden", "tunnelblick", "tailscale", "little-snitch", "malwarebytes", "vlc", "plex-media-server", "obs-studio", "handbrake", "iina", "homebrew-services", "postgresql", "mongodb", "redis", "mysql", "macfuse", "wireshark-bpf", "mega-sync", "pcloud", "sync-com", "vmware-fusion", "perplexity-ai"]
+      "high": [
+        "adobe-ags",
+        "adobe-gc-invoker",
+        "ccleaner"
+      ],
+      "medium": [
+        "google-keystone",
+        "adobe-armdc",
+        "zoom-daemon",
+        "jetbrains-toolbox",
+        "dropbox",
+        "onedrive",
+        "google-drive",
+        "box-drive",
+        "microsoft-teams",
+        "xcode-simulators",
+        "webex",
+        "skype",
+        "lastpass",
+        "nordvpn",
+        "expressvpn",
+        "surfshark",
+        "avast"
+      ],
+      "low": [
+        "microsoft-autoupdate",
+        "spotify-helper",
+        "brave-update",
+        "firefox-update",
+        "docker-desktop",
+        "slack",
+        "discord",
+        "telegram",
+        "whatsapp",
+        "signal",
+        "1password",
+        "bitwarden",
+        "tunnelblick",
+        "tailscale",
+        "little-snitch",
+        "malwarebytes",
+        "vlc",
+        "plex-media-server",
+        "obs-studio",
+        "handbrake",
+        "iina",
+        "homebrew-services",
+        "postgresql",
+        "mongodb",
+        "redis",
+        "mysql",
+        "macfuse",
+        "wireshark-bpf",
+        "mega-sync",
+        "pcloud",
+        "sync-com",
+        "vmware-fusion",
+        "perplexity-ai"
+      ]
     },
     "byVendor": {
-      "google": ["google-keystone", "google-drive"],
-      "adobe": ["adobe-ags", "adobe-gc-invoker", "adobe-armdc"],
-      "microsoft": ["microsoft-autoupdate", "onedrive", "microsoft-teams", "skype"],
-      "apple": ["xcode-simulators"],
-      "meta": ["whatsapp"]
+      "google": [
+        "google-keystone",
+        "google-drive"
+      ],
+      "adobe": [
+        "adobe-ags",
+        "adobe-gc-invoker",
+        "adobe-armdc"
+      ],
+      "microsoft": [
+        "microsoft-autoupdate",
+        "onedrive",
+        "microsoft-teams",
+        "skype"
+      ],
+      "apple": [
+        "xcode-simulators"
+      ],
+      "meta": [
+        "whatsapp"
+      ]
     }
   },
   "detectionPatterns": {
@@ -1416,5 +1673,9 @@
     "listDaemons": "sudo ls -la /Library/LaunchDaemons/",
     "findOrphans": "for plist in ~/Library/LaunchAgents/*.plist; do bundle_id=$(basename \"$plist\" .plist); mdfind \"kMDItemCFBundleIdentifier == '$bundle_id'\" 2>/dev/null | grep -q . || echo \"Orphan: $plist\"; done",
     "listRunning": "launchctl list | grep -v \"^-\" | grep -v \"com.apple\""
+  },
+  "metadata": {
+    "totalParasites": 53,
+    "lastUpdated": "2026-01-01"
   }
 }
