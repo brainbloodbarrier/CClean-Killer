@@ -58,7 +58,7 @@ EOF
 
 parse_common_args "$@"
 $SHOW_HELP && show_help
-set -- "${REMAINING_ARGS[@]}"
+set -- "${REMAINING_ARGS[@]+"${REMAINING_ARGS[@]}"}"
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
