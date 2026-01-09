@@ -120,26 +120,31 @@ scan_directory() {
     if $JSON_OUTPUT; then
         local items=()
         while IFS= read -r line; do
-            local size name
-            size=$(echo "$line" | awk '{print $1}')
-            name=$(echo "$line" | cut -f2-)
-            [[ -z "$name" ]] && continue
+            local size full_path item_name
+
+            # du output is tab-separated: <size>\t<path>
+            size=$(printf '%s' "$line" | cut -f1)
+            full_path=$(printf '%s' "$line" | cut -f2-)
+            [[ -z "$full_path" ]] && continue
+
+            item_name=$(basename "$full_path")
 
             local size_kb
             size_kb=$(parse_size_to_kb "$size")
             local item
-            item=$(json_object "name" "$name" "size" "$size" "size_kb" "$size_kb" "path" "$path/$name")
+            item=$(json_object "name" "$item_name" "size" "$size" "size_kb" "$size_kb" "path" "$full_path")
             items+=("$item")
         done < <(du -sh "$path"/*/ 2>/dev/null | sort -hr | head -n "$limit")
 
-        local json_section
-        json_section=$(json_object "category" "$description" "path" "$path" "items" "[$(IFS=,; echo "${items[*]}")]")
+        local items_json json_section
+        items_json=$(json_array "${items[@]}")
+        json_section=$(json_object "category" "$description" "path" "$path" "items" "$items_json")
         json_add_item "$json_section"
     else
         local count=0
         while IFS= read -r line; do
             echo "$line"
-            ((count++))
+            ((count++)) || true
         done < <(du -sh "$path"/*/ 2>/dev/null | sort -hr | head -n "$limit")
 
         if [[ $count -eq 0 ]]; then
@@ -164,20 +169,22 @@ scan_hidden() {
     if $JSON_OUTPUT; then
         local items=()
         while IFS= read -r line; do
-            local size name
-            size=$(echo "$line" | awk '{print $1}')
-            name=$(echo "$line" | cut -f2-)
-            [[ -z "$name" ]] && continue
+            local size full_path
+
+            size=$(printf '%s' "$line" | cut -f1)
+            full_path=$(printf '%s' "$line" | cut -f2-)
+            [[ -z "$full_path" ]] && continue
 
             local size_kb
             size_kb=$(parse_size_to_kb "$size")
             local item
-            item=$(json_object "name" "$(basename "$name")" "size" "$size" "size_kb" "$size_kb" "path" "$name")
+            item=$(json_object "name" "$(basename "$full_path")" "size" "$size" "size_kb" "$size_kb" "path" "$full_path")
             items+=("$item")
         done < <(du -sh "$path"/.[!.]* 2>/dev/null | sort -hr | head -n "$limit")
 
-        local json_section
-        json_section=$(json_object "category" "$description" "path" "$path" "items" "[$(IFS=,; echo "${items[*]}")]")
+        local items_json json_section
+        items_json=$(json_array "${items[@]}")
+        json_section=$(json_object "category" "$description" "path" "$path" "items" "$items_json")
         json_add_item "$json_section"
     else
         du -sh "$path"/.[!.]* 2>/dev/null | sort -hr | head -n "$limit" || echo "  (none found)"
@@ -190,22 +197,25 @@ scan_dev_tools() {
 
     local dev_items=()
 
-    declare -A DEV_PATHS=(
-        ["npm cache"]="$HOME/.npm"
-        ["pnpm cache"]="$HOME/Library/pnpm"
-        ["Homebrew"]="/opt/homebrew"
-        ["Homebrew (Intel)"]="/usr/local/Homebrew"
-        ["Cargo"]="$HOME/.cargo"
-        ["pip cache"]="$HOME/Library/Caches/pip"
-        ["Gradle"]="$HOME/.gradle"
-        ["Maven"]="$HOME/.m2"
-        ["CocoaPods"]="$HOME/Library/Caches/CocoaPods"
-        ["Xcode DerivedData"]="$HOME/Library/Developer/Xcode/DerivedData"
-        ["Android SDK"]="$HOME/Library/Android/sdk"
+    # Bash 3.x compatible "name|path" pairs (avoid associative arrays)
+    local dev_pairs=(
+        "npm cache|$HOME/.npm"
+        "pnpm cache|$HOME/Library/pnpm"
+        "Homebrew|/opt/homebrew"
+        "Homebrew (Intel)|/usr/local/Homebrew"
+        "Cargo|$HOME/.cargo"
+        "pip cache|$HOME/Library/Caches/pip"
+        "Gradle|$HOME/.gradle"
+        "Maven|$HOME/.m2"
+        "CocoaPods|$HOME/Library/Caches/CocoaPods"
+        "Xcode DerivedData|$HOME/Library/Developer/Xcode/DerivedData"
+        "Android SDK|$HOME/Library/Android/sdk"
     )
 
-    for name in "${!DEV_PATHS[@]}"; do
-        local path="${DEV_PATHS[$name]}"
+    for pair in "${dev_pairs[@]}"; do
+        local name="${pair%%|*}"
+        local path="${pair#*|}"
+
         if [[ -d "$path" ]]; then
             local size
             size=$(get_size_human "$path")
@@ -227,8 +237,9 @@ scan_dev_tools() {
     done
 
     if $JSON_OUTPUT; then
-        local json_section
-        json_section=$(json_object "category" "Developer Caches" "items" "[$(IFS=,; echo "${dev_items[*]}")]")
+        local items_json json_section
+        items_json=$(json_array "${dev_items[@]}")
+        json_section=$(json_object "category" "Developer Caches" "items" "$items_json")
         json_add_item "$json_section"
     fi
 }
@@ -248,8 +259,21 @@ scan_docker() {
 
     if $JSON_OUTPUT; then
         if docker_info=$(docker system df --format '{{json .}}' 2>/dev/null); then
+            # docker outputs one JSON object per line; convert to a proper JSON array.
+            local docker_array="["
+            local first=true
+            while IFS= read -r line; do
+                [[ -z "$line" ]] && continue
+                if ! $first; then
+                    docker_array+=","
+                fi
+                first=false
+                docker_array+="$line"
+            done <<< "$docker_info"
+            docker_array+="]"
+
             local json_section
-            json_section=$(json_object "category" "Docker" "available" "true" "data" "[$docker_info]")
+            json_section=$(json_object "category" "Docker" "available" "true" "data" "$docker_array")
             json_add_item "$json_section"
         else
             local json_section
@@ -328,9 +352,9 @@ main() {
         print_summary "Scan complete. Run with --json for structured output."
         echo ""
         echo "Quick Actions:"
-        echo "  ./clean.sh           - Clean caches and orphaned data"
-        echo "  ./find-parasites.sh  - Hunt zombie LaunchAgents/Daemons"
-        echo "  ./find-orphans.sh    - Find orphaned application data"
+        echo "  $SCRIPT_DIR/clean.sh --all      - Clean caches and orphaned data"
+        echo "  $SCRIPT_DIR/find-parasites.sh   - Hunt zombie LaunchAgents/Daemons"
+        echo "  $SCRIPT_DIR/find-orphans.sh     - Find orphaned application data"
         echo ""
     fi
 

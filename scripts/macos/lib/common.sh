@@ -67,18 +67,20 @@ declare -a JSON_ITEMS=()
 _cleanup_handler() {
     local exit_code=$?
 
-    # Restore cursor if hidden
-    printf '\033[?25h' 2>/dev/null || true
-
-    # Clear any in-progress indicators
+    # Clear any in-progress indicators FIRST
     if [[ "${_SPINNER_PID:-}" ]]; then
         kill "$_SPINNER_PID" 2>/dev/null || true
         wait "$_SPINNER_PID" 2>/dev/null || true
     fi
 
-    # Finalize JSON output if needed
+    # Finalize JSON output BEFORE cursor restore (to avoid polluting JSON)
     if $JSON_OUTPUT && [[ ${#JSON_ITEMS[@]} -gt 0 ]]; then
         json_finalize
+    fi
+
+    # Restore cursor if hidden (only in non-JSON mode to avoid output pollution)
+    if ! $JSON_OUTPUT; then
+        printf '\033[?25h' 2>/dev/null || true
     fi
 
     exit "$exit_code"
@@ -284,22 +286,15 @@ get_size_human() {
 }
 
 # Format kilobytes to human readable
+# Uses single awk call for efficiency
 format_size() {
     local kb=$1
-    local value
-
-    if [[ $kb -ge 1073741824 ]]; then
-        value=$(LC_NUMERIC=C awk "BEGIN {printf \"%.2f\", $kb/1073741824}")
-        echo "${value} TB"
-    elif [[ $kb -ge 1048576 ]]; then
-        value=$(LC_NUMERIC=C awk "BEGIN {printf \"%.2f\", $kb/1048576}")
-        echo "${value} GB"
-    elif [[ $kb -ge 1024 ]]; then
-        value=$(LC_NUMERIC=C awk "BEGIN {printf \"%.2f\", $kb/1024}")
-        echo "${value} MB"
-    else
-        echo "${kb} KB"
-    fi
+    LC_NUMERIC=C awk -v kb="$kb" 'BEGIN {
+        if (kb >= 1073741824) printf "%.2f TB", kb/1073741824
+        else if (kb >= 1048576) printf "%.2f GB", kb/1048576
+        else if (kb >= 1024) printf "%.2f MB", kb/1024
+        else printf "%d KB", kb
+    }'
 }
 
 # Parse human-readable size to kilobytes
@@ -373,53 +368,6 @@ extract_company() {
 # FILE OPERATIONS
 # =============================================================================
 
-# Safely remove a file or directory
-# Args: path description [--force]
-# Returns: size in KB freed (or 0)
-safe_remove() {
-    local path="$1"
-    local desc="${2:-$path}"
-    local force=false
-
-    [[ "${3:-}" == "--force" ]] && force=true
-
-    if [[ ! -e "$path" ]]; then
-        log_debug "Path does not exist: $path"
-        return 0
-    fi
-
-    local size_kb
-    size_kb=$(get_size_kb "$path")
-    local size_human
-    size_human=$(format_size "$size_kb")
-
-    if $DRY_RUN; then
-        log_info "Would remove: $desc ($size_human)"
-        log_verbose "  Path: $path"
-        echo "$size_kb"
-        return 0
-    fi
-
-    log_info "Removing: $desc ($size_human)"
-    log_verbose "  Path: $path"
-
-    # Capture actual error message instead of suppressing
-    local rm_output
-    rm_output=$(rm -rf "$path" 2>&1)
-    local rm_result=$?
-
-    if [[ $rm_result -eq 0 ]]; then
-        log_success "Removed: $desc"
-        echo "$size_kb"
-    else
-        local error_msg="${rm_output:-Unknown error (exit code: $rm_result)}"
-        log_error "Failed to remove: $path"
-        log_error "  Reason: $error_msg"
-        echo "0"
-        return 1  # Signal failure to caller
-    fi
-}
-
 # Check if path is safe to modify (not system critical)
 is_safe_path() {
     local path="$1"
@@ -448,6 +396,36 @@ is_safe_path() {
     return 0
 }
 
+# Normalize a path by removing trailing slashes and resolving to canonical form
+# Returns empty string and exit code 1 for invalid/empty paths
+normalize_path() {
+    local path="$1"
+
+    # Handle empty path
+    [[ -z "$path" ]] && return 1
+
+    # Remove trailing slashes (but keep root /)
+    while [[ "$path" == */ ]] && [[ "$path" != "/" ]]; do
+        path="${path%/}"
+    done
+
+    # If path exists, resolve to canonical form
+    if [[ -e "$path" ]]; then
+        # Use cd + pwd -P to resolve symlinks in directory part
+        local dir base
+        dir="$(cd "$(dirname "$path")" 2>/dev/null && pwd -P)"
+        base="$(basename "$path")"
+        if [[ -n "$dir" ]]; then
+            echo "${dir}/${base}"
+        else
+            echo "$path"
+        fi
+    else
+        # Path doesn't exist, return cleaned version
+        echo "$path"
+    fi
+}
+
 # =============================================================================
 # JSON OUTPUT UTILITIES
 # =============================================================================
@@ -463,6 +441,22 @@ json_init() {
 json_add_item() {
     local json_obj="$1"
     JSON_ITEMS+=("$json_obj")
+}
+
+# Join array elements into a JSON array string
+# Usage: json_array "${items[@]}"
+json_array() {
+    local result="["
+    local first=true
+    for item in "$@"; do
+        if ! $first; then
+            result+=","
+        fi
+        first=false
+        result+="$item"
+    done
+    result+="]"
+    echo "$result"
 }
 
 # Build a JSON object from key-value pairs
@@ -481,16 +475,16 @@ json_object() {
         fi
         first=false
 
-        # Escape special characters in value
-        value=$(echo "$value" | sed 's/\\/\\\\/g; s/"/\\"/g; s/	/\\t/g')
-
-        # Check if value is a number, boolean, null, or already JSON
+        # Check if value is a number, boolean, null, or already JSON BEFORE escaping
         if [[ "$value" =~ ^-?[0-9]+\.?[0-9]*$ ]] || \
            [[ "$value" == "true" ]] || [[ "$value" == "false" ]] || \
            [[ "$value" == "null" ]] || \
            [[ "$value" =~ ^\[.*\]$ ]] || [[ "$value" =~ ^\{.*\}$ ]]; then
+            # Value is already valid JSON literal, use as-is
             result+="\"$key\":$value"
         else
+            # Escape special characters in string value
+            value=$(echo "$value" | sed 's/\\/\\\\/g; s/"/\\"/g; s/	/\\t/g')
             result+="\"$key\":\"$value\""
         fi
     done
@@ -499,7 +493,44 @@ json_object() {
     echo "$result"
 }
 
+# Add a removal action to JSON output
+# Usage: json_add_action "removed"|"would_remove"|"skipped"|"failed" path description [size] [size_kb] [error]
+json_add_action() {
+    $JSON_OUTPUT || return 0
+
+    local action="$1"
+    local path="$2"
+    local desc="$3"
+    local size="${4:-}"
+    local size_kb="${5:-}"
+    local error="${6:-}"
+
+    local item
+    case "$action" in
+        removed|would_remove)
+            item=$(json_object \
+                "action" "$action" \
+                "path" "$path" \
+                "description" "$desc" \
+                "size" "$size" \
+                "size_kb" "$size_kb")
+            ;;
+        skipped|failed)
+            item=$(json_object \
+                "action" "$action" \
+                "path" "$path" \
+                "description" "$desc" \
+                "error" "$error")
+            ;;
+        *)
+            item=$(json_object "action" "$action" "path" "$path" "description" "$desc")
+            ;;
+    esac
+    json_add_item "$item"
+}
+
 # Finalize and print JSON output
+# Clears JSON_ITEMS after output to prevent double printing from cleanup handler
 json_finalize() {
     if $JSON_OUTPUT; then
         echo "{"
@@ -519,6 +550,9 @@ json_finalize() {
         echo ""
         echo "  ]"
         echo "}"
+
+        # Clear items to prevent double output from cleanup handler
+        JSON_ITEMS=()
     fi
 }
 

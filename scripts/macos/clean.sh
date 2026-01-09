@@ -216,18 +216,16 @@ backup_path() {
 
     # Create backup directory with error checking
     local mkdir_output
-    mkdir_output=$(mkdir -p "$backup_parent" 2>&1)
-    if [[ $? -ne 0 ]]; then
+    if ! mkdir_output=$(mkdir -p "$backup_parent" 2>&1); then
         log_error "Cannot create backup directory: $backup_parent"
-        log_error "  Reason: ${mkdir_output}"
+        log_error "  Reason: ${mkdir_output:-Unknown error}"
         log_error "  REFUSING TO DELETE without successful backup"
         return 1  # Signal failure - caller should NOT proceed with deletion
     fi
 
     # Attempt backup with error capture
     local cp_output
-    cp_output=$(cp -R "$path" "$backup_dest" 2>&1)
-    if [[ $? -eq 0 ]]; then
+    if cp_output=$(cp -R "$path" "$backup_dest" 2>&1); then
         log_verbose "Backed up: $path"
         return 0
     else
@@ -247,6 +245,34 @@ remove_with_tracking() {
         return 0
     fi
 
+    # Normalize and enforce safety before ANY deletion.
+    local normalized
+    normalized=$(normalize_path "$path")
+
+    if [[ -z "$normalized" ]] || [[ "$normalized" == "/" ]]; then
+        log_error "Refusing to remove empty or root path"
+        ((ERRORS_COUNT++)) || true
+        json_add_action "skipped" "$path" "$description" "" "" "Refused unsafe path (empty/root)"
+        return 0
+    fi
+
+    # Never follow symlinks (including symlinks that were passed with trailing /).
+    if [[ -L "$normalized" ]]; then
+        log_error "Refusing to remove symlink: $normalized"
+        ((ERRORS_COUNT++)) || true
+        json_add_action "skipped" "$normalized" "$description" "" "" "Refused symlink"
+        return 0
+    fi
+
+    if ! is_safe_path "$normalized"; then
+        log_error "Refusing to remove unsafe path: $normalized"
+        ((ERRORS_COUNT++)) || true
+        json_add_action "skipped" "$normalized" "$description" "" "" "Refused unsafe path"
+        return 0
+    fi
+
+    path="$normalized"
+
     local size_kb
     size_kb=$(get_size_kb "$path")
     local size_human
@@ -256,65 +282,35 @@ remove_with_tracking() {
         log_info "Would remove: $description ($size_human)"
         TOTAL_FREED_KB=$((TOTAL_FREED_KB + size_kb))
         ((ITEMS_CLEANED++)) || true
-
-        if $JSON_OUTPUT; then
-            json_add_item "$(json_object \
-                "action" "would_remove" \
-                "path" "$path" \
-                "description" "$description" \
-                "size" "$size_human" \
-                "size_kb" "$size_kb")"
-        fi
+        json_add_action "would_remove" "$path" "$description" "$size_human" "$size_kb"
         return 0
     fi
 
     # Backup if enabled - abort removal if backup fails
     if ! backup_path "$path"; then
         ((ERRORS_COUNT++)) || true
-        if $JSON_OUTPUT; then
-            json_add_item "$(json_object \
-                "action" "skipped" \
-                "path" "$path" \
-                "description" "$description" \
-                "error" "Backup failed, deletion aborted")"
-        fi
+        json_add_action "skipped" "$path" "$description" "" "" "Backup failed, deletion aborted"
         return 1
     fi
 
     log_info "Removing: $description ($size_human)"
 
-    # Capture actual error message instead of suppressing
-    local rm_output
-    local rm_exit_code
-    rm_output=$(rm -rf "$path" 2>&1)
-    rm_exit_code=$?
+    # Capture actual error message instead of suppressing (avoid set -e abort on failure)
+    local rm_output=""
+    local rm_exit_code=0
+    rm_output=$(rm -rf -- "$path" 2>&1) || rm_exit_code=$?
 
     if [[ $rm_exit_code -eq 0 ]]; then
         TOTAL_FREED_KB=$((TOTAL_FREED_KB + size_kb))
         ((ITEMS_CLEANED++)) || true
         log_success "Removed: $description"
-
-        if $JSON_OUTPUT; then
-            json_add_item "$(json_object \
-                "action" "removed" \
-                "path" "$path" \
-                "description" "$description" \
-                "size" "$size_human" \
-                "size_kb" "$size_kb")"
-        fi
+        json_add_action "removed" "$path" "$description" "$size_human" "$size_kb"
     else
         ((ERRORS_COUNT++)) || true
         local error_reason="${rm_output:-Unknown error (exit code: $rm_exit_code)}"
         log_error "Failed to remove: $path"
         log_error "  Reason: $error_reason"
-
-        if $JSON_OUTPUT; then
-            json_add_item "$(json_object \
-                "action" "failed" \
-                "path" "$path" \
-                "description" "$description" \
-                "error" "$error_reason")"
-        fi
+        json_add_action "failed" "$path" "$description" "" "" "$error_reason"
     fi
 }
 
@@ -347,7 +343,7 @@ clean_caches() {
         fi
 
         remove_with_tracking "$cache" "Cache: $name"
-        ((count++))
+        ((count++)) || true
     done
 
     if [[ $count -eq 0 ]] && ! $JSON_OUTPUT; then
@@ -600,13 +596,7 @@ clean_parasites() {
             if $DRY_RUN; then
                 log_info "Would unload and remove: $name"
                 ((count++))
-
-                if $JSON_OUTPUT; then
-                    json_add_item "$(json_object \
-                        "action" "would_remove" \
-                        "path" "$plist" \
-                        "description" "LaunchAgent: $name")"
-                fi
+                json_add_action "would_remove" "$plist" "LaunchAgent: $name"
             else
                 # Unload first with error checking
                 local unload_output
@@ -618,21 +608,16 @@ clean_parasites() {
 
                     # Only remove if unload succeeded
                     local rm_output
-                    rm_output=$(rm -f "$plist" 2>&1)
+                    rm_output=$(rm -f -- "$plist" 2>&1)
                     if [[ $? -eq 0 ]]; then
                         log_success "Removed LaunchAgent: $name"
                         ((count++))
-
-                        if $JSON_OUTPUT; then
-                            json_add_item "$(json_object \
-                                "action" "removed" \
-                                "path" "$plist" \
-                                "description" "LaunchAgent: $name")"
-                        fi
+                        json_add_action "removed" "$plist" "LaunchAgent: $name"
                     else
                         log_error "Failed to remove plist: $plist"
                         log_error "  Reason: ${rm_output:-Unknown error}"
                         ((ERRORS_COUNT++)) || true
+                        json_add_action "failed" "$plist" "LaunchAgent: $name" "" "" "${rm_output:-Unknown error}"
                     fi
                 else
                     log_error "Failed to unload LaunchAgent: $name"
@@ -641,14 +626,7 @@ clean_parasites() {
                     fi
                     log_warn "Skipping removal to prevent inconsistent state"
                     ((ERRORS_COUNT++)) || true
-
-                    if $JSON_OUTPUT; then
-                        json_add_item "$(json_object \
-                            "action" "failed" \
-                            "path" "$plist" \
-                            "description" "LaunchAgent: $name" \
-                            "error" "Failed to unload: ${unload_output:-Unknown error}")"
-                    fi
+                    json_add_action "failed" "$plist" "LaunchAgent: $name" "" "" "Failed to unload: ${unload_output:-Unknown error}"
                 fi
             fi
         fi

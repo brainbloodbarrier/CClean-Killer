@@ -4,6 +4,10 @@
 
 set -e
 
+# Source common library for safety functions
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+[[ -f "$SCRIPT_DIR/lib/common.sh" ]] && source "$SCRIPT_DIR/lib/common.sh"
+
 # Colors
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -90,17 +94,40 @@ safe_remove() {
     local path="$1"
     local desc="$2"
 
-    if [ -e "$path" ]; then
-        local size=$(du -sk "$path" 2>/dev/null | cut -f1 || echo "0")
-        local size_formatted=$(format_size $size)
+    # Skip if path doesn't exist
+    [[ ! -e "$path" ]] && return 0
 
-        if $DRY_RUN; then
-            echo -e "${YELLOW}Would remove:${NC} $desc ($size_formatted)"
-        else
-            echo -e "${GREEN}Removing:${NC} $desc ($size_formatted)"
-            rm -rf "$path"
-            total_freed=$((total_freed + size))
-        fi
+    # Normalize and validate path
+    local normalized
+    normalized=$(normalize_path "$path")
+
+    # Reject empty or root paths
+    if [[ -z "$normalized" ]] || [[ "$normalized" == "/" ]]; then
+        echo -e "${RED}✗ Refusing empty/root path${NC}"
+        return 1
+    fi
+
+    # Reject symlinks - never follow links
+    if [[ -L "$normalized" ]]; then
+        echo -e "${RED}✗ Refusing symlink: $normalized${NC}"
+        return 1
+    fi
+
+    # Validate against protected system paths
+    if ! is_safe_path "$normalized"; then
+        echo -e "${RED}✗ Refusing unsafe path: $normalized${NC}"
+        return 1
+    fi
+
+    local size=$(du -sk "$normalized" 2>/dev/null | cut -f1 || echo "0")
+    local size_formatted=$(format_size $size)
+
+    if $DRY_RUN; then
+        echo -e "${YELLOW}Would remove:${NC} $desc ($size_formatted)"
+    else
+        echo -e "${GREEN}Removing:${NC} $desc ($size_formatted)"
+        rm -rf -- "$normalized"
+        total_freed=$((total_freed + size))
     fi
 }
 

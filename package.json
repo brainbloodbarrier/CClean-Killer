@@ -2,7 +2,6 @@
   "name": "cclean-killer",
   "version": "1.0.0",
   "description": "The CCleaner Killer - System cleanup tool that outperforms the parasitic 'cleaner'",
-  "main": "index.js",
   "scripts": {
     "test": "./tests/framework/test-runner.sh",
     "test:verbose": "./tests/framework/test-runner.sh --verbose",
@@ -10,17 +9,18 @@
     "test:unit": "./tests/framework/test-runner.sh --filter unit",
     "test:integration": "./tests/framework/test-runner.sh --filter integration",
     "scan": "bash scripts/$(uname | tr '[:upper:]' '[:lower:]' | sed 's/darwin/macos/')/scan.sh",
-    "clean": "bash scripts/$(uname | tr '[:upper:]' '[:lower:]' | sed 's/darwin/macos/')/clean.sh",
-    "clean:dry-run": "bash scripts/$(uname | tr '[:upper:]' '[:lower:]' | sed 's/darwin/macos/')/clean.sh --dry-run",
-    "parasites": "bash scripts/macos/find-parasites.sh",
-    "orphans": "bash scripts/macos/find-orphans.sh"
+    "clean": "bash scripts/$(uname | tr '[:upper:]' '[:lower:]' | sed 's/darwin/macos/')/clean.sh --all",
+    "clean:dry-run": "bash scripts/$(uname | tr '[:upper:]' '[:lower:]' | sed 's/darwin/macos/')/clean.sh --dry-run --all",
+    "parasites": "bash scripts/$(uname | tr '[:upper:]' '[:lower:]' | sed 's/darwin/macos/')/find-parasites.sh",
+    "orphans": "bash scripts/$(uname | tr '[:upper:]' '[:lower:]' | sed 's/darwin/macos/')/find-orphans.sh",
+    "report": "node scripts/report.mjs"
   },
   "bin": {
     "cclean-killer": "./bin/cclean-killer.sh"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/example/cclean-killer.git"
+    "url": "https://github.com/brainbloodbarrier/CClean-Killer.git"
   },
   "keywords": [
     "cleanup",
@@ -34,9 +34,9 @@
   "author": "",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/example/cclean-killer/issues"
+    "url": "https://github.com/brainbloodbarrier/CClean-Killer/issues"
   },
-  "homepage": "https://github.com/example/cclean-killer#readme",
+  "homepage": "https://github.com/brainbloodbarrier/CClean-Killer#readme",
   "engines": {
     "node": ">=14.0.0"
   },
