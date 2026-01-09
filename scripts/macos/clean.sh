@@ -371,7 +371,7 @@ clean_logs() {
         name=$(basename "$log")
 
         remove_with_tracking "$log" "Logs: $name"
-        ((count++))
+        ((count++)) || true
     done
 
     # Also clean individual log files
@@ -382,7 +382,7 @@ clean_logs() {
         name=$(basename "$log_file")
 
         remove_with_tracking "$log_file" "Log: $name"
-        ((count++))
+        ((count++)) || true
     done
 
     if [[ $count -eq 0 ]] && ! $JSON_OUTPUT; then
@@ -422,7 +422,7 @@ clean_orphans() {
 
         if ! is_app_installed "$name"; then
             remove_with_tracking "$dir" "Orphan (App Support): $name"
-            ((count++))
+            ((count++)) || true
         fi
     done
 
@@ -442,7 +442,7 @@ clean_orphans() {
 
         if ! is_app_installed "$app_name"; then
             remove_with_tracking "$dir" "Orphan (Container): $bundle_id"
-            ((count++))
+            ((count++)) || true
         fi
     done
 
@@ -462,7 +462,7 @@ clean_orphans() {
 
         if ! is_app_installed "$app_name"; then
             remove_with_tracking "$dir" "Orphan (Saved State): $bundle_id"
-            ((count++))
+            ((count++)) || true
         fi
     done
 
@@ -480,37 +480,37 @@ clean_dev() {
     # npm cache
     if [[ -d "$HOME/.npm/_cacache" ]]; then
         remove_with_tracking "$HOME/.npm/_cacache" "npm cache"
-        ((count++))
+        ((count++)) || true
     fi
 
     # pnpm store
     if [[ -d "$HOME/Library/pnpm/store" ]]; then
         remove_with_tracking "$HOME/Library/pnpm/store" "pnpm store"
-        ((count++))
+        ((count++)) || true
     fi
 
     # pip cache
     if [[ -d "$HOME/Library/Caches/pip" ]]; then
         remove_with_tracking "$HOME/Library/Caches/pip" "pip cache"
-        ((count++))
+        ((count++)) || true
     fi
 
     # Cargo registry cache
     if [[ -d "$HOME/.cargo/registry/cache" ]]; then
         remove_with_tracking "$HOME/.cargo/registry/cache" "Cargo registry cache"
-        ((count++))
+        ((count++)) || true
     fi
 
     # Gradle caches
     if [[ -d "$HOME/.gradle/caches" ]]; then
         remove_with_tracking "$HOME/.gradle/caches" "Gradle caches"
-        ((count++))
+        ((count++)) || true
     fi
 
     # CocoaPods cache
     if [[ -d "$HOME/Library/Caches/CocoaPods" ]]; then
         remove_with_tracking "$HOME/Library/Caches/CocoaPods" "CocoaPods cache"
-        ((count++))
+        ((count++)) || true
     fi
 
     # Xcode DerivedData
@@ -522,7 +522,7 @@ clean_dev() {
         fi
         if $DRY_RUN || confirm_action "Clean Xcode DerivedData?"; then
             remove_with_tracking "$HOME/Library/Developer/Xcode/DerivedData" "Xcode DerivedData"
-            ((count++))
+            ((count++)) || true
         fi
     fi
 
@@ -534,7 +534,7 @@ clean_dev() {
             log_info "Running: brew cleanup --prune=all"
             if brew cleanup --prune=all 2>/dev/null; then
                 log_success "Homebrew cleanup complete"
-                ((count++))
+                ((count++)) || true
             else
                 log_warn "Homebrew cleanup had issues"
             fi
